@@ -4,7 +4,7 @@ Fecha: 23 de octubre de 2026. Entorno local: Windows y Node.js 24.16.0.
 
 ## Resultado de las pruebas
 
-La ejecución de `npm test` construyó ambos clientes y completó **46 pruebas aprobadas, 0 fallidas**. Los tamaños de construcción y las verificaciones de la carpeta de entrega se registran al final de este documento.
+La ejecución de `npm test` construyó ambos clientes y completó **47 pruebas aprobadas, 0 fallidas**. Los tamaños de construcción y las verificaciones de la carpeta de entrega se registran al final de este documento.
 
 La construcción verificó que el cliente real no incluye módulos privados del servidor, secretos ni el transporte ficticio de demostración. Se copian las tres fotos y la pista MP3 a la salida de Vercel.
 
@@ -60,7 +60,7 @@ La vista previa devolvió HTTP 200 para `/demo`, `/admin`, las tres fotos, el MP
 
 No hay un navegador conectado disponible para revisar la composición, el recorte de las fotos, el desplazamiento o la fluidez a diferentes anchos. JSDOM verifica comportamiento y estructura, pero no calcula la geometría visual.
 
-No se desplegó en Vercel ni se enlazó una hoja real: el usuario hará el despliegue y debe configurar sus credenciales. El enlace de la hoja se recibió el 23 de octubre; la consulta web no permitió acceder a su contenido. Las pruebas de Sheets usan transporte simulado y PGlite no sustituye la conexión al PostgreSQL de producción. Por instrucción del usuario, las pruebas de llenado en línea quedan pendientes hasta que confirme que la aplicación está publicada.
+La página ya está desplegada en Vercel y se verificaron la portada, `/demo`, `/admin`, los recursos y la API después de corregir el error 404. La API pública devuelve las 23 preguntas y el tema **Objetos de cocina**. Todavía no se ha activado la base de producción ni enlazado una hoja real. Las pruebas de Sheets usan transporte simulado y PGlite no sustituye una conexión a Supabase. Por instrucción del usuario, las pruebas de llenado real quedan pendientes hasta que confirme que todos los servicios están en línea.
 
 ## Entrega
 
@@ -77,3 +77,9 @@ Vista previa en este computador: http://localhost:4173/demo. La API local devuel
 El repositorio de GitHub tenía la aplicación dentro de `SUBIR-A-GITHUB`, mientras el despliegue publicaba la carpeta exterior: `/` y `/api/rpc` devolvían 404, pero `/SUBIR-A-GITHUB/dist/index.html` devolvía 200. Se trasladó el proyecto a la raíz del repositorio para que Vercel detecte `package.json`, `vercel.json` y `api` al desplegar con Root Directory `./`.
 
 Se compararon los 82 archivos subidos con el proyecto verificado: no había diferencias de contenido, únicamente normalización de saltos de línea en Git. Se restauraron `.gitignore`, `.vercelignore` y la plantilla vacía `.env.example`. La prueba nueva reprodujo primero la ausencia de `package.json` en la raíz y pasó después del traslado. Una instalación limpia y `npm test` completaron las 46 pruebas antes de publicar la corrección. Las comprobaciones del sitio en línea y sus servicios deben registrarse por separado de estas pruebas locales.
+
+## Preparación para Supabase
+
+Se agregó una migración para la tabla privada del estado del evento, con RLS activada y revocación de permisos para los roles públicos de la API. El repositorio PostgreSQL también activa RLS al inicializar la tabla.
+
+La prueba nueva falló antes del cambio y pasó después: un rol sin políticas no puede ver, insertar, modificar ni borrar el estado, aunque reciba permisos SQL sobre la tabla. Su propietario conserva el acceso para el servidor. La ejecución completa pasó las 47 pruebas. Esta comprobación es local; no significa que se haya autorizado una cuenta ni creado la tabla en Supabase.

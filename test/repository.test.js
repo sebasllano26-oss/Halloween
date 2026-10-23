@@ -6,6 +6,25 @@ import { createRuntime } from '../src/server/runtime.js';
 import { randomUUID } from 'node:crypto';
 import { QUESTIONS } from '../src/shared/content.js';
 
+test('Supabase: las credenciales y los votos quedan fuera del acceso de roles publicos', async t => {
+  const db = new PGlite(); t.after(() => db.close());
+  const repository = createPostgresRepository({ async connect() { return { query: (query, values) => db.query(query, values), release() {} }; } });
+  await repository.transaction(state => { state.invitations.push({ code: 'PRIVATE-CODE' }); });
+  const table = (await db.query("SELECT relrowsecurity FROM pg_class WHERE oid = 'public.halloween_app_state'::regclass")).rows[0];
+  assert.equal(table.relrowsecurity, true);
+  await db.query('CREATE ROLE halloween_public_test NOLOGIN');
+  await db.query('GRANT USAGE ON SCHEMA public TO halloween_public_test');
+  await db.query('GRANT SELECT, INSERT, UPDATE, DELETE ON public.halloween_app_state TO halloween_public_test');
+  await db.query('SET ROLE halloween_public_test');
+  try {
+    assert.equal((await db.query('SELECT * FROM public.halloween_app_state')).rows.length, 0);
+    await assert.rejects(db.query("INSERT INTO public.halloween_app_state (id, state) VALUES ('intruso', '{}'::jsonb)"), error => error.code === '42501');
+    assert.equal((await db.query("UPDATE public.halloween_app_state SET state = '{}'::jsonb RETURNING id")).rows.length, 0);
+    assert.equal((await db.query('DELETE FROM public.halloween_app_state RETURNING id')).rows.length, 0);
+  } finally { await db.query('RESET ROLE'); }
+  assert.equal((await db.query('SELECT count(*)::int AS total FROM public.halloween_app_state')).rows[0].total, 1);
+});
+
 test('PostgreSQL: esquema, transacciones y votos atómicos en un motor PostgreSQL local WASM', async t => {
   const db = new PGlite(); t.after(() => db.close());
   let queue = Promise.resolve();

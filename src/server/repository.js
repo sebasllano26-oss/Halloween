@@ -26,6 +26,7 @@ export function createPostgresRepository(pool) {
       // Serialize schema initialization as well as application writes across Vercel instances.
       await client.query('SELECT pg_advisory_xact_lock(842615701)');
       await client.query('CREATE TABLE IF NOT EXISTS public.halloween_app_state (id TEXT PRIMARY KEY, state JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT now())');
+      await client.query('ALTER TABLE public.halloween_app_state ENABLE ROW LEVEL SECURITY');
       await client.query('INSERT INTO public.halloween_app_state (id, state) VALUES ($1, $2::jsonb) ON CONFLICT (id) DO NOTHING', ['main', JSON.stringify(emptyState())]);
       const row = await client.query('SELECT state FROM public.halloween_app_state WHERE id = $1 FOR UPDATE', ['main']);
       const state = row.rows[0].state;

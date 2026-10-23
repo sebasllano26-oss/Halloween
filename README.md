@@ -1,6 +1,6 @@
 # Halloween Vélez López
 
-Aplicación web independiente para Vercel, con la experiencia **El baile de las sombras** y conexión directa a Google Sheets. No utiliza Apps Script.
+Aplicación web independiente para Vercel, con la experiencia **El baile de las sombras**, Supabase como base principal y una copia opcional en Google Sheets. No utiliza Apps Script. El tema de esta edición es **Objetos de cocina**.
 
 En este repositorio, la aplicación y `vercel.json` están en la raíz. En Vercel usa **Root Directory: `./`**, **Framework Preset: Other**, **Build Command: `npm run build`** y **Output Directory: `dist`**.
 
@@ -41,15 +41,17 @@ El archivo `vercel.json` ya contiene la configuración:
 | Entrada del administrador | `/admin` o el candado de la página |
 | Demostración aislada | `/demo` |
 
-### 1. Conecta una base PostgreSQL
+### 1. Conecta Supabase
 
-Conecta PostgreSQL desde el Marketplace/Storage de tu proyecto de Vercel; Neon es una opción compatible. Guarda su cadena de conexión, con SSL, en `DATABASE_URL`. La aplicación crea automáticamente su tabla `public.halloween_app_state`; no necesitas ejecutar migraciones manuales. [Guía oficial de Neon con Vercel](https://neon.com/docs/guides/vercel-overview).
+En tu proyecto de Supabase, abre **Connect → Transaction pooler**, copia la conexión PostgreSQL del puerto **6543** y usa `sslmode=require`. Guárdala en `DATABASE_URL` de Vercel; no uses la URL pública de Supabase ni una clave `anon` en ese campo. [Guía oficial de conexiones de Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres).
 
-La base de datos permite controlar invitaciones y votos simultáneos entre distintas instancias de Vercel. Google Sheets recibe una copia de las respuestas. Así se conserva el voto aunque Google no responda y se puede reintentar sin duplicarlo.
+La aplicación crea automáticamente `public.halloween_app_state` y activa la seguridad por filas. El servidor se conecta como propietario de esa tabla; los visitantes no acceden a ella mediante la API pública de Supabase. También se incluye la migración en `supabase/migrations/202610230001_halloween_state.sql` para prepararla mediante MCP o el editor SQL. [Seguridad por filas en Supabase](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
+Supabase guarda el evento, las invitaciones, las respuestas y la verificación de la clave. Permite controlar votos simultáneos entre distintas instancias de Vercel. **Google Sheets es opcional**: no hace falta configurarlo para votar, administrar o revelar al ganador. Si se conecta, recibe una copia de las respuestas y los fallos de sincronización no eliminan el voto.
 
 Usa bases o ramas separadas para pruebas y producción: así los votos de una vista previa no se mezclan con los del evento.
 
-### 2. Prepara la conexión de Google, una sola vez
+### 2. Google Sheets, solo si quieres la copia
 
 1. En [Google Cloud Console](https://console.cloud.google.com/), crea o selecciona un proyecto y habilita **Google Sheets API**.
 2. En **IAM y administración → Cuentas de servicio**, crea una cuenta de servicio. Para esta integración no necesitas concederle el rol de Editor de todo el proyecto ni delegación de dominio: el acceso al archivo se concede compartiendo esa hoja.
@@ -58,22 +60,22 @@ Usa bases o ramas separadas para pruebas y producción: así los votos de una vi
 
 Consulta las instrucciones oficiales de [cuentas de servicio para documentos compartidos](https://developers.google.com/workspace/guides/create-credentials#service-account) y [creación de claves JSON](https://docs.cloud.google.com/iam/docs/keys-create-delete).
 
-### 3. Agrega estas cuatro variables en Vercel
+### 3. Agrega las variables en Vercel
 
 En **Settings → Environment Variables**:
 
-| Variable | Qué debes poner |
-| --- | --- |
-| `DATABASE_URL` | Cadena de conexión a tu PostgreSQL, usando SSL. |
-| `ADMIN_PASSWORD` | Tu clave inicial del administrador, de 12 a 256 caracteres. |
-| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | El valor `client_email` del JSON de Google. |
-| `GOOGLE_PRIVATE_KEY` | El valor completo de `private_key`, sin comillas exteriores. Admite saltos de línea reales o los caracteres `\n` del JSON. |
+| Variable | Qué debes poner | Necesaria |
+| --- | --- | --- |
+| `DATABASE_URL` | Conexión Transaction pooler de Supabase, puerto 6543 y SSL. | Sí |
+| `ADMIN_PASSWORD` | Tu clave inicial del administrador, de 12 a 256 caracteres. | Sí, al inicializar |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | El valor `client_email` del JSON de Google. | Solo para copiar a Sheets |
+| `GOOGLE_PRIVATE_KEY` | El valor completo de `private_key`, sin comillas exteriores. Admite saltos de línea reales o los caracteres `\n` del JSON. | Solo para copiar a Sheets |
 
 Son variables del servidor. No les agregues prefijos `PUBLIC`, `NEXT_PUBLIC` ni `VITE`, y no las pongas en archivos que subas al repositorio. Después de guardarlas, realiza un nuevo despliegue para que estén disponibles.
 
 `ADMIN_PASSWORD` inicializa la clave la primera vez que se prepara la base de datos. Después, el verificador con sal queda guardado en PostgreSQL; no hay una clave predeterminada publicada en el código.
 
-### 4. Enlaza tu hoja desde el panel
+### 4. Enlaza tu hoja desde el panel (opcional)
 
 1. Abre [la hoja enviada para este proyecto](https://docs.google.com/spreadsheets/d/1_ypZV39tfxp4yRpLB3uYyQP7s9r3QhFGP0D0sY04bfs/edit).
 2. Compártela como **Editor** con el correo `GOOGLE_SERVICE_ACCOUNT_EMAIL`.
