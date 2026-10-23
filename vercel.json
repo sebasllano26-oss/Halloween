@@ -4,7 +4,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm ci --no-audit --no-fund",
-  "functions": { "api/rpc.js": { "maxDuration": 60 } },
+  "functions": { "api/rpc.js": { "maxDuration": 60, "includeFiles": "src/server/certs/*.crt" } },
   "rewrites": [ { "source": "/admin", "destination": "/index.html" }, { "source": "/demo", "destination": "/demo/index.html" }, { "source": "/demo/", "destination": "/demo/index.html" } ],
   "headers": [
     {

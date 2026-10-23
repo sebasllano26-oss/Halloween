@@ -37,9 +37,20 @@ export function createPostgresRepository(pool) {
     finally { client.release(); }
   } };
 }
+export function postgresConnectionOptions(connectionString) {
+  const url = new URL(connectionString);
+  const supabase = url.hostname.endsWith('.pooler.supabase.com') || /^db\.[a-z0-9]+\.supabase\.co$/.test(url.hostname);
+  if (!supabase) return { connectionString };
+  // pg's URL SSL options replace the ssl object, including its trusted CA.
+  for (const option of ['ssl', 'sslmode', 'sslrootcert', 'sslcert', 'sslkey']) url.searchParams.delete(option);
+  return {
+    connectionString: url.toString(),
+    ssl: { ca: readFileSync(new URL('./certs/supabase-root-2021.crt', import.meta.url), 'utf8'), rejectUnauthorized: true },
+  };
+}
 let productionPool;
 export function productionRepository() {
   if (!process.env.DATABASE_URL) throw new AppError('NOT_READY', 'El organizador todavía está preparando el formulario. Intenta de nuevo en un momento.');
-  productionPool ||= new Pool({ connectionString: process.env.DATABASE_URL, max: 2, connectionTimeoutMillis: 10000, idleTimeoutMillis: 10000, allowExitOnIdle: true });
+  productionPool ||= new Pool({ ...postgresConnectionOptions(process.env.DATABASE_URL), max: 2, connectionTimeoutMillis: 10000, idleTimeoutMillis: 10000, allowExitOnIdle: true });
   return createPostgresRepository(productionPool);
 }

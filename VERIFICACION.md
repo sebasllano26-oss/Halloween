@@ -4,7 +4,7 @@ Fecha: 23 de octubre de 2026. Entorno local: Windows y Node.js 24.16.0.
 
 ## Resultado de las pruebas
 
-La ejecución de `npm test` construyó ambos clientes y completó **47 pruebas aprobadas, 0 fallidas**. Los tamaños de construcción y las verificaciones de la carpeta de entrega se registran al final de este documento.
+La ejecución de `npm test` construyó ambos clientes y completó **49 pruebas aprobadas, 0 fallidas**. Los tamaños de construcción y las verificaciones de la carpeta de entrega se registran al final de este documento.
 
 La construcción verificó que el cliente real no incluye módulos privados del servidor, secretos ni el transporte ficticio de demostración. Se copian las tres fotos y la pista MP3 a la salida de Vercel.
 
@@ -60,7 +60,7 @@ La vista previa devolvió HTTP 200 para `/demo`, `/admin`, las tres fotos, el MP
 
 No hay un navegador conectado disponible para revisar la composición, el recorte de las fotos, el desplazamiento o la fluidez a diferentes anchos. JSDOM verifica comportamiento y estructura, pero no calcula la geometría visual.
 
-La página ya está desplegada en Vercel y se verificaron la portada, `/demo`, `/admin`, los recursos y la API después de corregir el error 404. La API pública devuelve las 23 preguntas y el tema **Objetos de cocina**. Todavía no se ha activado la base de producción ni enlazado una hoja real. Las pruebas de Sheets usan transporte simulado y PGlite no sustituye una conexión a Supabase. Por instrucción del usuario, las pruebas de llenado real quedan pendientes hasta que confirme que todos los servicios están en línea.
+La página ya está desplegada en Vercel y se verificaron la portada, `/demo`, `/admin`, los recursos y la API después de corregir el error 404. La API pública devuelve las 23 preguntas y el tema **Objetos de cocina**. La base de Supabase ya está preparada y verificada desde este computador; falta activar su conexión en el servidor de Vercel. No se ha enlazado una hoja real. Las pruebas de Sheets usan transporte simulado. Por instrucción del usuario, las pruebas de llenado real quedan pendientes hasta que confirme que todos los servicios están en línea.
 
 ## Entrega
 
@@ -83,3 +83,11 @@ Se compararon los 82 archivos subidos con el proyecto verificado: no había dife
 Se agregó una migración para la tabla privada del estado del evento, con RLS activada y revocación de permisos para los roles públicos de la API. El repositorio PostgreSQL también activa RLS al inicializar la tabla.
 
 La prueba nueva falló antes del cambio y pasó después: un rol sin políticas no puede ver, insertar, modificar ni borrar el estado, aunque reciba permisos SQL sobre la tabla. Su propietario conserva el acceso para el servidor. La ejecución completa pasó las 47 pruebas. Esta comprobación es local; no significa que se haya autorizado una cuenta ni creado la tabla en Supabase.
+
+## Supabase real
+
+Después de autorizar una organización propia mediante MCP, se reactivó el proyecto existente `prueba` del plan gratuito. Se crearon una tabla propia y un usuario PostgreSQL dedicado, sin cambiar la contraseña del usuario `postgres`. El estado inicial incluye Antonia, Guillermo y Andrea, el tema **Objetos de cocina** y un verificador privado de la clave del administrador. No se agregaron votos ni invitaciones de prueba.
+
+Se comprobó una transacción real a través del Transaction pooler de Supabase, con la misma implementación del repositorio de la aplicación. El certificado y el nombre del servidor se verificaron contra la CA oficial incluida. El propietario accede a su tabla; RLS está activa y los roles `anon` y `authenticated` carecen de permiso de lectura. La clave generada coincide con el verificador guardado.
+
+El primer intento de TLS mostró que Node.js no confía por defecto en la CA de Supabase. Dos pruebas nuevas reprodujeron la falta de configuración y comprobaron después que `pg` conserva la CA y la verificación incluso cuando la URL contiene opciones SSL. La ejecución completa pasó las 49 pruebas.

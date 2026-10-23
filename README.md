@@ -47,6 +47,8 @@ En tu proyecto de Supabase, abre **Connect → Transaction pooler**, copia la co
 
 La aplicación crea automáticamente `public.halloween_app_state` y activa la seguridad por filas. El servidor se conecta como propietario de esa tabla; los visitantes no acceden a ella mediante la API pública de Supabase. También se incluye la migración en `supabase/migrations/202610230001_halloween_state.sql` para prepararla mediante MCP o el editor SQL. [Seguridad por filas en Supabase](https://supabase.com/docs/guides/database/postgres/row-level-security).
 
+Para Supabase, el servidor incluye su certificado público raíz y verifica el certificado y el nombre del servidor al conectarse. Vercel incluye ese archivo en la función; no debes descargarlo ni agregar otra variable. Su procedencia está documentada en `src/server/certs/README.md`.
+
 Supabase guarda el evento, las invitaciones, las respuestas y la verificación de la clave. Permite controlar votos simultáneos entre distintas instancias de Vercel. **Google Sheets es opcional**: no hace falta configurarlo para votar, administrar o revelar al ganador. Si se conecta, recibe una copia de las respuestas y los fallos de sincronización no eliminan el voto.
 
 Usa bases o ramas separadas para pruebas y producción: así los votos de una vista previa no se mezclan con los del evento.
