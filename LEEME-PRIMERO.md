@@ -2,6 +2,8 @@
 
 La aplicación incluye fotos, música, animaciones, las 22 preguntas proporcionadas y el voto final. Presentación y encuesta están en una sola página. El tema de esta edición es **Objetos de cocina**.
 
+**La instalación actual ya está activada con Supabase en Vercel.** Entra al administrador, usa la clave del archivo privado entregado y crea las invitaciones. Los pasos de conexión siguientes sirven para reinstalar o cambiar de proyecto; no necesitas repetirlos.
+
 ## 1. Repositorio y despliegue
 
 El proyecto está en [GitHub](https://github.com/sebasllano26-oss/Halloween) y la página se publica en [Vercel](https://vele-rouge.vercel.app/). La estructura que causaba el error 404 ya está corregida: `package.json`, `vercel.json`, `api`, `public`, `scripts` y `src` quedan en la raíz.

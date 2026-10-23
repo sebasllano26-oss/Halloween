@@ -60,7 +60,7 @@ La vista previa devolvió HTTP 200 para `/demo`, `/admin`, las tres fotos, el MP
 
 No hay un navegador conectado disponible para revisar la composición, el recorte de las fotos, el desplazamiento o la fluidez a diferentes anchos. JSDOM verifica comportamiento y estructura, pero no calcula la geometría visual.
 
-La página ya está desplegada en Vercel y se verificaron la portada, `/demo`, `/admin`, los recursos y la API después de corregir el error 404. La API pública devuelve las 23 preguntas y el tema **Objetos de cocina**. La base de Supabase ya está preparada y verificada desde este computador; falta activar su conexión en el servidor de Vercel. No se ha enlazado una hoja real. Las pruebas de Sheets usan transporte simulado. Por instrucción del usuario, las pruebas de llenado real quedan pendientes hasta que confirme que todos los servicios están en línea.
+La página ya está desplegada en Vercel y conectada a Supabase en producción. Se verificaron la portada, `/demo`, `/admin`, los recursos y la API. La API pública devuelve `configured: true`, las 23 preguntas y el tema **Objetos de cocina**. No se ha enlazado una hoja real; las pruebas de Sheets usan transporte simulado. Por instrucción del usuario, las pruebas de llenado real quedan pendientes hasta que indique que se realicen.
 
 ## Entrega
 
@@ -82,7 +82,7 @@ Se compararon los 82 archivos subidos con el proyecto verificado: no había dife
 
 Se agregó una migración para la tabla privada del estado del evento, con RLS activada y revocación de permisos para los roles públicos de la API. El repositorio PostgreSQL también activa RLS al inicializar la tabla.
 
-La prueba nueva falló antes del cambio y pasó después: un rol sin políticas no puede ver, insertar, modificar ni borrar el estado, aunque reciba permisos SQL sobre la tabla. Su propietario conserva el acceso para el servidor. La ejecución completa pasó las 47 pruebas. Esta comprobación es local; no significa que se haya autorizado una cuenta ni creado la tabla en Supabase.
+La prueba nueva falló antes del cambio y pasó después: un rol sin políticas no puede ver, insertar, modificar ni borrar el estado, aunque reciba permisos SQL sobre la tabla. Su propietario conserva el acceso para el servidor. Esa ejecución completó las 47 pruebas locales; la comprobación de Supabase real se describe a continuación.
 
 ## Supabase real
 
@@ -90,4 +90,16 @@ Después de autorizar una organización propia mediante MCP, se reactivó el pro
 
 Se comprobó una transacción real a través del Transaction pooler de Supabase, con la misma implementación del repositorio de la aplicación. El certificado y el nombre del servidor se verificaron contra la CA oficial incluida. El propietario accede a su tabla; RLS está activa y los roles `anon` y `authenticated` carecen de permiso de lectura. La clave generada coincide con el verificador guardado.
 
+La revisión de Supabase devuelve para esta tabla el aviso informativo [RLS activada sin políticas](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy). Es intencional: el navegador no consulta esa tabla y el acceso se realiza mediante el servidor propietario. Los roles de la API pública no reciben políticas ni permisos de lectura.
+
 El primer intento de TLS mostró que Node.js no confía por defecto en la CA de Supabase. Dos pruebas nuevas reprodujeron la falta de configuración y comprobaron después que `pg` conserva la CA y la verificación incluso cuando la URL contiene opciones SSL. La ejecución completa pasó las 49 pruebas.
+
+## Activación en Vercel y comprobación publicada
+
+Se configuraron `DATABASE_URL` y `ADMIN_PASSWORD` como variables sensibles exclusivamente de Production en el proyecto `vele`. No se publicaron sus valores en GitHub ni se compartió la base con despliegues de Preview. La función incluye la CA pública de Supabase.
+
+El despliegue del código `13c5684` quedó `READY` y asociado a `https://vele-rouge.vercel.app/`. La API real confirmó la conexión y el tema actualizado. Se verificaron el inicio de sesión del administrador, la consulta privada del panel y el cierre de esa sesión, sin crear votos. El panel devolvió 0 respuestas y 0 invitaciones.
+
+La comprobación JSDOM del código publicado verificó las 23 preguntas habilitadas, siete secciones, 92 opciones, tres fotos y la presentación antes de la encuesta. La demo completó un llenado y produjo su comprobante con datos exclusivos del navegador, sin solicitar registros al servidor real. No se detectaron errores de ejecución en esa comprobación.
+
+La clave del administrador y la conexión permanecen en archivos privados del área `.local`, excluidos de GitHub y de la entrega para subir. Las pruebas con respuestas reales siguen pendientes de la indicación del usuario.
