@@ -2,6 +2,8 @@
 
 Aplicación web independiente para Vercel, con la experiencia **El baile de las sombras** y conexión directa a Google Sheets. No utiliza Apps Script.
 
+En este repositorio, la aplicación y `vercel.json` están en la raíz. En Vercel usa **Root Directory: `./`**, **Framework Preset: Other**, **Build Command: `npm run build`** y **Output Directory: `dist`**.
+
 Los invitados ven primero la presentación y las fotos de Antonia, Guillermo y Andrea. En esa misma página, debajo, escriben su nombre y responden las 22 preguntas del archivo proporcionado por el usuario y el voto al mejor disfraz: **23 preguntas en total**, con opciones grandes. Al final hay un único botón para enviar. El administrador entra con su clave, gestiona invitaciones, enlaza la hoja y revela al ganador después de cerrar la urna.
 
 Para subir el proyecto, empieza por [LEEME-PRIMERO.md](LEEME-PRIMERO.md). La carpeta de entrega `SUBIR-A-GITHUB` contiene el proyecto completo y excluye datos locales y credenciales.

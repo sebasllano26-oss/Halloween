@@ -4,7 +4,7 @@ Fecha: 23 de octubre de 2026. Entorno local: Windows y Node.js 24.16.0.
 
 ## Resultado de las pruebas
 
-La ejecución de `npm test` construyó ambos clientes y completó **45 pruebas aprobadas, 0 fallidas**. Los tamaños de construcción y las verificaciones de la carpeta de entrega se registran al final de este documento.
+La ejecución de `npm test` construyó ambos clientes y completó **46 pruebas aprobadas, 0 fallidas**. Los tamaños de construcción y las verificaciones de la carpeta de entrega se registran al final de este documento.
 
 La construcción verificó que el cliente real no incluye módulos privados del servidor, secretos ni el transporte ficticio de demostración. Se copian las tres fotos y la pista MP3 a la salida de Vercel.
 
@@ -71,3 +71,9 @@ En esa carpeta se ejecutó una instalación limpia con `npm ci --no-audit --no-f
 El cliente del evento pesa 132.901 bytes; la demostración, 151.918 bytes; el CSS compartido, 91.353 bytes, antes de compresión HTTP. La compilación mantiene fuera del cliente real el código privado del servidor.
 
 Vista previa en este computador: http://localhost:4173/demo. La API local devuelve las 23 preguntas actualizadas; `/demo`, `/admin`, las tres fotos, el MP3, CSS y JavaScript respondieron HTTP 200. El registro de errores local quedó vacío. La aplicación usa conexión directa a Google Sheets y no contiene Apps Script.
+
+## Corrección de estructura para Vercel
+
+El repositorio de GitHub tenía la aplicación dentro de `SUBIR-A-GITHUB`, mientras el despliegue publicaba la carpeta exterior: `/` y `/api/rpc` devolvían 404, pero `/SUBIR-A-GITHUB/dist/index.html` devolvía 200. Se trasladó el proyecto a la raíz del repositorio para que Vercel detecte `package.json`, `vercel.json` y `api` al desplegar con Root Directory `./`.
+
+Se compararon los 82 archivos subidos con el proyecto verificado: no había diferencias de contenido, únicamente normalización de saltos de línea en Git. Se restauraron `.gitignore`, `.vercelignore` y la plantilla vacía `.env.example`. La prueba nueva reprodujo primero la ausencia de `package.json` en la raíz y pasó después del traslado. Una instalación limpia y `npm test` completaron las 46 pruebas antes de publicar la corrección. Las comprobaciones del sitio en línea y sus servicios deben registrarse por separado de estas pruebas locales.
