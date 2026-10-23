@@ -1,4 +1,4 @@
-> **Acceso actualizado:** comparte un solo enlace, https://vele-rouge.vercel.app/ . No se necesitan invitaciones ni códigos. El control de duplicados usa el nombre completo declarado, normalizando tildes, mayúsculas y espacios. Supabase guarda las respuestas; Google Sheets sigue siendo una copia opcional pendiente de credenciales. Consulta LEEME-PRIMERO.md para el uso actual.
+> **Acceso actualizado:** comparte un solo enlace, https://vele-rouge.vercel.app/ . No se necesitan invitaciones ni códigos. El control de duplicados usa el nombre completo declarado, normalizando tildes, mayúsculas y espacios. Supabase guarda las respuestas; Google Sheets ya está conectado como copia automática de esta instalación. Consulta LEEME-PRIMERO.md para el uso actual.
 
 # Halloween Vélez López
 
@@ -56,6 +56,8 @@ Supabase guarda el evento, las invitaciones, las respuestas y la verificación d
 Usa bases o ramas separadas para pruebas y producción: así los votos de una vista previa no se mezclan con los del evento.
 
 ### 2. Google Sheets, solo si quieres la copia
+
+La instalación actual ya está enlazada a la hoja del proyecto. Estos pasos sirven para configurar otra instalación o cambiar sus credenciales.
 
 1. En [Google Cloud Console](https://console.cloud.google.com/), crea o selecciona un proyecto y habilita **Google Sheets API**.
 2. En **IAM y administración → Cuentas de servicio**, crea una cuenta de servicio. Para esta integración no necesitas concederle el rol de Editor de todo el proyecto ni delegación de dominio: el acceso al archivo se concede compartiendo esa hoja.

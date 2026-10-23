@@ -12,7 +12,7 @@ El administrador entra en https://vele-rouge.vercel.app/admin con la clave del a
 
 **Supabase ya está conectado y guarda las respuestas.** La descarga CSV del panel se puede abrir en Excel o importar en Google Sheets.
 
-La copia automática a la hoja de Google todavía no está conectada: faltan las credenciales de una cuenta de servicio con permiso de edición sobre esa hoja. Esto no impide votar ni consultar los resultados en el panel. Los pasos para esa copia opcional están en README.md.
+La copia automática ya está conectada a [Encuesta halloween](https://docs.google.com/spreadsheets/d/1_ypZV39tfxp4yRpLB3uYyQP7s9r3QhFGP0D0sY04bfs/edit#gid=873274653). Las pestañas del sistema son Halloween_Respuestas, Halloween_Resultados y Halloween_Evento. Cada respuesta se guarda primero en Supabase y después se copia a la hoja. El panel permite sincronizar pendientes si Google falla. La pestaña original se conserva. Las credenciales están protegidas en Vercel y fuera del repositorio.
 
 ## Despliegue
 

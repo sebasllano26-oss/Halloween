@@ -60,7 +60,7 @@ La vista previa devolvió HTTP 200 para `/demo`, `/admin`, las tres fotos, el MP
 
 No hay un navegador conectado disponible para revisar la composición, el recorte de las fotos, el desplazamiento o la fluidez a diferentes anchos. JSDOM verifica comportamiento y estructura, pero no calcula la geometría visual.
 
-La página ya está desplegada en Vercel y conectada a Supabase en producción. Se verificaron la portada, `/demo`, `/admin`, los recursos y la API. La API pública devuelve `configured: true`, las 23 preguntas y el tema **Objetos de cocina**. No se ha enlazado una hoja real; las pruebas de Sheets usan transporte simulado. Por instrucción del usuario, las pruebas de llenado real quedan pendientes hasta que indique que se realicen.
+La página ya está desplegada en Vercel y conectada a Supabase en producción. Se verificaron la portada, `/demo`, `/admin`, los recursos y la API. La API pública devuelve `configured: true`, las 23 preguntas y el tema **Objetos de cocina**. La hoja real ya está enlazada; la comprobación de producción se documenta al final. Por instrucción del usuario, las pruebas de llenado real quedan pendientes hasta que indique que se realicen.
 
 ## Entrega
 
@@ -108,4 +108,14 @@ La clave del administrador y la conexión permanecen en archivos privados del á
 
 Se sustituyó el acceso por invitaciones por un enlace común. El formulario pide nombre completo y las 23 respuestas; no muestra ni envía códigos. El servidor bloquea nombres completos repetidos después de normalizar tildes, mayúsculas, puntuación y espacios. Este mecanismo identifica el nombre declarado, sin verificar identidad legal.
 
-Las 51 pruebas locales aprobaron. Se verifican el envío sin código, el rechazo del mismo nombre desde dos solicitudes concurrentes, el reintento sin duplicación y el uso de un dispositivo por otra persona. El panel ofrece el enlace común y muestra Supabase como guardado activo. La copia automática a Google Sheets sigue pendiente de credenciales; el CSV ya se puede descargar.
+Las 51 pruebas locales aprobaron. Se verifican el envío sin código, el rechazo del mismo nombre desde dos solicitudes concurrentes, el reintento sin duplicación y el uso de un dispositivo por otra persona. El panel ofrece el enlace común y muestra Supabase como guardado activo. La copia automática a Google Sheets quedó activada después de esta comprobación del acceso público; el CSV también se puede descargar.
+
+## Conexión real de Google Sheets
+
+El 23 de octubre de 2026 se validó el JSON de la cuenta de servicio, se habilitó la API en su proyecto y el propietario compartió la hoja con permiso de Editor. Las variables GOOGLE_SERVICE_ACCOUNT_EMAIL y GOOGLE_PRIVATE_KEY se guardaron como sensibles, solo para Production de Vercel. El archivo y la clave no se incluyen en GitHub ni en la entrega pública.
+
+El despliegue 08b0358 quedó READY. Desde la API de producción se inició sesión como administrador y se enlazó la misma hoja del usuario. Se crearon Halloween_Respuestas, Halloween_Resultados y Halloween_Evento, conservando Hoja 1. El encabezado de respuestas contiene cuatro columnas de identificación y las 23 preguntas, hasta AA; la columna D se llama Identificador de participación. Se retiró la pestaña de invitaciones de las nuevas conexiones.
+
+La lectura posterior verificó los encabezados completos, el total de resultados, la ausencia de comprobantes duplicados y cero pendientes. El sistema y la hoja tenían cero participaciones en ese momento; no se crearon votos ficticios. La sesión usada para comprobarlo se cerró. Se aplicaron encabezados legibles, ajuste de texto y una nota de procedencia en las tres pestañas propias, y se leyeron de nuevo los valores y el formato.
+
+La suite completa aprobó 51 pruebas. Se mantiene pendiente el llenado real que el usuario pidió realizar después de su indicación.
