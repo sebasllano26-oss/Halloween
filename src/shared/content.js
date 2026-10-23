@@ -4,7 +4,7 @@ const question = (id, prompt, labels, section, aside = '') => ({
 
 export const DEFAULT_EVENT = {
   title: 'Halloween Vélez López', edition: '2026',
-  theme: 'Animales de la selva tropical', open: true, revealedAt: null,
+  theme: 'Objetos de cocina', open: true, revealedAt: null,
   candidates: [
     { id: 'antonia', name: 'Antonia', character: 'witch', color: 'purple', tagline: 'Creatividad bajo sospecha' },
     { id: 'guillermo', name: 'Guillermo', character: 'vampire', color: 'orange', tagline: 'La leyenda de Doña Gloria' },

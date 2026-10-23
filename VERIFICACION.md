@@ -68,7 +68,7 @@ Se creó la carpeta `SUBIR-A-GITHUB`, con todos los archivos del proyecto para s
 
 En esa carpeta se ejecutó una instalación limpia con `npm ci --no-audit --no-fund`: 85 paquetes instalados. Después, `npm test` volvió a construir ambos clientes y aprobó las 45 pruebas, sin fallos. Se retiró `node_modules` de la entrega después de comprobarla, conservándolo en el área local de validación; Vercel lo instalará desde `package-lock.json`.
 
-El cliente del evento pesa 132.901 bytes; la demostración, 151.918 bytes; el CSS compartido, 91.353 bytes, antes de compresión HTTP. La compilación mantiene fuera del cliente real el código privado del servidor.
+El cliente del evento pesa 132.889 bytes; la demostración, 151.906 bytes; el CSS compartido, 91.353 bytes, antes de compresión HTTP. La compilación mantiene fuera del cliente real el código privado del servidor.
 
 Vista previa en este computador: http://localhost:4173/demo. La API local devuelve las 23 preguntas actualizadas; `/demo`, `/admin`, las tres fotos, el MP3, CSS y JavaScript respondieron HTTP 200. El registro de errores local quedó vacío. La aplicación usa conexión directa a Google Sheets y no contiene Apps Script.
 
