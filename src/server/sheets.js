@@ -2,8 +2,8 @@ import { JWT } from 'google-auth-library';
 import { AppError, tally } from './service.js';
 import { QUESTIONS } from '../shared/content.js';
 
-export const TAB = { responses: 'Halloween_Respuestas', invites: 'Halloween_Invitaciones', results: 'Halloween_Resultados', event: 'Halloween_Evento' };
-const HEADERS = ['Comprobante', 'Fecha del servidor (UTC)', 'Nombre', 'Invitación', ...QUESTIONS.map(q => q.id === 'vote' ? 'El mejor disfraz' : q.prompt)];
+export const TAB = { responses: 'Halloween_Respuestas', results: 'Halloween_Resultados', event: 'Halloween_Evento' };
+const HEADERS = ['Comprobante', 'Fecha del servidor (UTC)', 'Nombre', 'Identificador de participación', ...QUESTIONS.map(q => q.id === 'vote' ? 'El mejor disfraz' : q.prompt)];
 function columnName(number) {
   let name = '';
   while (number > 0) { number--; name = String.fromCharCode(65 + number % 26) + name; number = Math.floor(number / 26); }
@@ -51,7 +51,6 @@ export function createSheetsClient({ request, now = () => new Date().toISOString
       if (requests.length) await request(`/spreadsheets/${id}:batchUpdate`, { method: 'POST', json: { requests } });
       await batch(id, [
         { range: `${TAB.responses}!A1:${LAST_RESPONSE_COLUMN}1`, values: [HEADERS] },
-        { range: TAB.invites + '!A1:D1', values: [['Código', 'Invitado', 'Creada (UTC)', 'Estado']] },
         { range: TAB.results + '!A1:D1', values: [['Participante', 'Votos', 'Porcentaje', 'Urna']] },
         { range: TAB.event + '!A1:B1', values: [['Campo', 'Valor']] },
       ]);
@@ -67,7 +66,7 @@ export function createSheetsClient({ request, now = () => new Date().toISOString
         const rows = pending.map(r => [r.id, r.createdAt, r.name, r.code, ...QUESTIONS.map(q => q.id === 'vote' ? state.config.candidates.find(c => c.id === r.answers.vote)?.name || '' : q.options.find(o => o.value === r.answers[q.id])?.label || '')]);
         await request(values(id, `${TAB.responses}!A:${LAST_RESPONSE_COLUMN}`) + ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS', { method: 'POST', json: { values: rows } });
       }
-      const result = tally(state), used = new Set(state.responses.map(r => r.code));
+      const result = tally(state);
       // Fixed-size ranges clear stale result rows when candidates change before voting.
       const ranking = result.ranking.map(c => [c.name, c.votes, c.percentage + '%', state.config.open ? 'Abierta' : 'Cerrada']);
       while (ranking.length < 12) ranking.push(['', '', '', '']);
@@ -76,7 +75,6 @@ export function createSheetsClient({ request, now = () => new Date().toISOString
         { range: TAB.results + '!A2:D14', values: ranking },
         { range: TAB.event + '!A2:B6', values: [['Evento', state.config.title], ['Edición', state.config.edition], ['Tema', state.config.theme], ['Estado', state.config.open ? 'Abierta' : 'Cerrada'], ['Revelado (UTC)', state.config.revealedAt || 'Todavía no']] },
       ];
-      if (state.invitations.length) data.push({ range: TAB.invites + '!A2:D' + (state.invitations.length + 1), values: state.invitations.map(i => [i.code, i.name, i.createdAt, used.has(i.code) ? 'Utilizada' : 'Disponible']) });
       await batch(id, data);
       state.sheet.syncedIds = state.responses.map(r => r.id); state.sheet.lastSyncAt = now(); state.sheet.lastError = null;
       return { synced: state.sheet.syncedIds.length, pending: 0 };

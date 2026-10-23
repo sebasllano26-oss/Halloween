@@ -86,10 +86,9 @@ Son variables del servidor. No les agregues prefijos `PUBLIC`, `NEXT_PUBLIC` ni 
 3. Abre la aplicación desplegada y entra al panel con tu clave.
 4. En **Configuración**, el enlace enviado ya aparece prellenado. Confírmalo y pulsa **Enlazar mi hoja**. Puedes cambiarlo si prefieres otra hoja. Tener el enlace preparado no significa que el acceso de escritura esté configurado.
 
-Se crean cuatro pestañas propias, sin tocar las demás:
+Se crean tres pestañas propias, sin tocar las demás:
 
 - `Halloween_Respuestas`: una fila por participación, con cuatro columnas de identificación y las 23 respuestas, de A a AA.
-- `Halloween_Invitaciones`: códigos, invitados y estado de uso.
 - `Halloween_Resultados`: conteo por participante, porcentajes y total.
 - `Halloween_Evento`: nombre, edición, tema y estado de las votaciones.
 

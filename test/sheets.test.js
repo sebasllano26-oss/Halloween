@@ -38,7 +38,7 @@ function fakeGoogle() {
     if (range.startsWith('Halloween_Respuestas!A1:')) return { values: headers.length ? [headers] : [] };
     throw new Error('Ruta inesperada: ' + path);
   };
-  return { request, rows, tabs, reads, writes, appends: () => appends, uncertain() { uncertain = true; }, emptyNarrow() { tabs.set('Halloween_Respuestas', { title: 'Halloween_Respuestas', sheetId: 42, gridProperties: { columnCount: 26 } }); }, incompatible() { tabs.set('Halloween_Respuestas', { title: 'Halloween_Respuestas', sheetId: 42, gridProperties: { columnCount: 26 } }); headers = ['Datos de otro proyecto']; } };
+  return { request, rows, tabs, reads, writes, headers: () => headers, appends: () => appends, uncertain() { uncertain = true; }, emptyNarrow() { tabs.set('Halloween_Respuestas', { title: 'Halloween_Respuestas', sheetId: 42, gridProperties: { columnCount: 26 } }); }, incompatible() { tabs.set('Halloween_Respuestas', { title: 'Halloween_Respuestas', sheetId: 42, gridProperties: { columnCount: 26 } }); headers = ['Datos de otro proyecto']; } };
 }
 function state() {
   const state = emptyState(); state.sheet = { spreadsheetId: ID, syncedIds: [], lastSyncAt: null, lastError: null };
@@ -53,7 +53,9 @@ test('interpreta únicamente URLs de Google Sheets o identificadores válidos', 
 test('la API directa copia las 23 respuestas hasta AA sin truncar las últimas preguntas', async () => {
   const google = fakeGoogle(), client = createSheetsClient({ request: google.request }), data = state();
   await client.connect(ID, data.config); await client.sync(data);
-  assert.equal(google.tabs.size, 4); assert.equal(google.rows.length, 1);
+  assert.equal(google.tabs.size, 3); assert.equal(google.rows.length, 1);
+  assert.equal(google.tabs.has('Halloween_Invitaciones'), false);
+  assert.equal(google.headers()[3], 'Identificador de participación');
   assert.equal(google.tabs.get('Halloween_Respuestas').gridProperties.columnCount, 27);
   assert.equal(google.rows[0][2], '=FORMULA()'); assert.equal(google.rows[0].length, 27);
   assert.deepEqual(google.rows[0].slice(4, -1), QUESTIONS.slice(0, -1).map(q => q.options[0].label));
