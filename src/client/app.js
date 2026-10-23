@@ -11,6 +11,7 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&a
 const runtime = document.documentElement.dataset.runtime;
 let publicData, draft, view = location.pathname === '/admin' || location.hash === '#admin' ? 'login' : 'home';
 let token = null, adminData = null, adminTab = 'overview', revealData = null, feedbackAudio, invitationError = '';
+let testMode = false;
 let motion = !matchMedia('(prefers-reduced-motion: reduce)').matches, reading = false, keyboardNavigation = false;
 let cleanMotion = () => {};
 try { if (localStorage.getItem('halloween-motion') === 'off') motion = false; reading = localStorage.getItem('halloween-reading') === 'on'; } catch { /* Optional preferences. */ }
@@ -29,6 +30,13 @@ function updateMusicControls() {
   document.querySelectorAll('[data-volume-value]').forEach(span => { span.textContent = Math.round(soundtrack.volume * 100) + '%'; });
 }
 function saveDraft() { try { localStorage.setItem(storageKey, JSON.stringify(draft)); } catch { /* The current page still retains responses. */ } }
+function restoreGuestDraft() {
+  storageKey = `halloween-draft-${runtime}-${publicData.event.edition}-${QUESTIONNAIRE_VERSION}`;
+  let saved; try { saved = localStorage.getItem(storageKey); } catch {}
+  draft = reconcileDraft(restoreDraft(saved, publicData.event.edition), publicData.questions, publicData.event.edition);
+  if (runtime === 'demo' && !draft.code) draft.code = 'HALLOWEEN-DEMO';
+  saveDraft();
+}
 function announce(message) { $('#announcer').textContent = message; }
 function notify(message) { const toast = $('#toast'); toast.textContent = message; toast.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.hidden = true; }, 4000); }
 function showError(error) {
@@ -65,8 +73,10 @@ function renderChrome() {
   updateMusicControls();
   $('#footer').innerHTML = `<span class="footer-left">${icon('ghost')} ${escape(event.title)} · ${escape(event.edition)} <span aria-hidden="true">/</span> Una tradición de otro mundo.</span><button class="text-button" data-action="admin">${icon('lock')} Acceso del anfitrión</button>`;
   const environment = $('#environment');
-  environment.hidden = runtime === 'vercel';
-  environment.innerHTML = runtime === 'demo'
+  environment.hidden = runtime === 'vercel' && !testMode;
+  environment.innerHTML = testMode
+    ? '<span><strong>MODO DE PRUEBA.</strong> Estos envíos no cuentan para el ganador.</span><span class="environment-actions"><button class="text-button" data-action="fill-test">Completar con respuestas de prueba</button><button class="text-button" data-action="exit-test">Volver al panel de pruebas</button></span>'
+    : runtime === 'demo'
     ? '<span><strong>Demostración interactiva.</strong> Todo queda en este navegador.</span><span class="environment-actions"><button class="text-button" data-action="demo-reset">Reiniciar prueba</button><button class="text-button" data-action="demo-admin">Ver panel de prueba</button></span>'
     : '<span><strong>Vista previa local.</strong></span><span class="environment-actions"><a href="/demo">Probar como invitado</a><button class="text-button" data-action="admin">Preparar evento real</button></span>';
 }
@@ -74,7 +84,7 @@ function animateScreen() {
   cleanMotion();
   cleanMotion = mountMotion(main, { enabled: motion, view, keyboard: keyboardNavigation });
 }
-function guestViewData() { return { publicData, draft, runtime, linked: Boolean(prefetchedCode && draft.code) || runtime === 'demo', invitationError }; }
+function guestViewData() { return { publicData: testMode ? { ...publicData, event: { ...publicData.event, open: true, opensAt: null } } : publicData, draft, runtime, testMode, linked: Boolean(prefetchedCode && draft.code) || runtime === 'demo', invitationError }; }
 function home() { return homeView(guestViewData()); }
 function pageTop() { return `<div class="page-top"><button class="text-button" data-action="home">${icon('back')} Volver a la fiesta</button><span class="live-pill">${publicData.event.open ? 'Urna abierta' : 'Urna cerrada'}</span></div>`; }
 function answerLabel(q, answers = draft.answers) { return q.options.find(o => o.value === answers[q.id])?.label || 'Sin responder'; }
@@ -187,13 +197,14 @@ async function submitVote(button) {
     draft.id ||= submissionId(); draft.pending = true; saveDraft();
     const fields = $('#survey-fields'); if (fields) fields.disabled = true;
     try {
-      const result = await rpc('submit', { id: draft.id, name: draft.name, answers: draft.answers });
+      const result = await rpc(testMode ? 'submitTest' : 'submit', { id: draft.id, name: draft.name, answers: draft.answers, ...(testMode ? { token } : {}) });
       if (result.status !== 'recorded' || !result.receipt?.id) throw new Error('No llegó el comprobante. Vuelve a confirmar el mismo envío.');
-      draft.receipt = result.receipt; draft.pending = false; invitationError = ''; saveDraft(); refreshSurvey();
+      if (testMode && !result.receipt.test) throw new Error('No se confirmó el registro como prueba.');
+      draft.receipt = { ...result.receipt, ...(testMode ? { sheet: result.sheet } : {}) }; draft.pending = false; invitationError = ''; saveDraft(); refreshSurvey();
       const receipt = $('#survey-receipt'); receipt?.scrollIntoView({ behavior: motion ? 'smooth' : 'auto', block: 'center' }); receipt?.focus({ preventScroll: true });
-      announce('Participación confirmada. Tu voto quedó registrado.'); tone([392, 523, 659]); celebrate();
+      announce(testMode ? 'Prueba registrada. No cuenta como voto real.' : 'Participación confirmada. Tu voto quedó registrado.'); tone([392, 523, 659]); celebrate();
     } catch (error) {
-      if (['INVALID_INPUT', 'INVALID_ANSWERS', 'EVENT_CLOSED', 'INVITE_INVALID', 'INVITE_USED', 'VOTE_ALREADY_RECORDED', 'NOT_CONFIGURED'].includes(error.code)) draft.pending = false;
+      if (['INVALID_INPUT', 'INVALID_ANSWERS', 'EVENT_CLOSED', 'INVITE_INVALID', 'INVITE_USED', 'VOTE_ALREADY_RECORDED', 'NOT_CONFIGURED', 'AUTH_REQUIRED'].includes(error.code)) draft.pending = false;
       if (['INVITE_INVALID', 'INVITE_USED'].includes(error.code)) invitationError = error.message;
       if (error.code === 'EVENT_CLOSED') publicData.event.open = false;
       if (error.code === 'NOT_CONFIGURED') publicData.configured = false;
@@ -236,9 +247,13 @@ function settingsPage() {
   const event = adminData.event, sheet = adminData.sheet || {};
   return `<div class="settings-layout"><section class="panel"><h2>Los detalles de la noche.</h2><p>Personaliza el evento. Los participantes se pueden cambiar antes del primer voto.</p><form id="event-form" style="margin-top:23px"><div class="field-inline"><div class="field"><label for="event-title">Nombre del evento</label><input id="event-title" name="title" maxlength="100" required value="${escape(event.title)}"></div><div class="field"><label for="event-edition">Edición</label><input id="event-edition" name="edition" type="number" min="2000" max="2099" required value="${escape(event.edition)}"></div></div><div class="field"><label for="event-theme">Tema de los disfraces</label><input id="event-theme" name="theme" maxlength="180" required value="${escape(event.theme)}"></div><div class="field"><label for="event-candidates">Participantes · uno por línea</label><textarea id="event-candidates" name="candidates" ${adminData.total ? 'readonly' : ''} required>${escape(event.candidates.map(c => c.name).join('\n'))}</textarea><small>${adminData.total ? 'Los participantes están protegidos porque ya hay votos.' : 'Puedes incluir entre 2 y 12 participantes.'}</small></div><button class="btn btn-primary" type="submit">Guardar cambios ${icon('check')}</button></form></section><section class="panel"><div class="eyebrow">CONEXIÓN DIRECTA · SIN APPS SCRIPT</div><h2 style="margin-top:13px">Copia opcional en tu hoja.</h2><p>La conexión se hace una sola vez. Tus invitados solo usarán el formulario.</p>${sheet.connected ? `<div class="connection-state">${icon('check')} Hoja enlazada · ${sheet.pending || 0} respuestas pendientes</div>` : ''}${sheet.serviceEmail ? `<ol class="help-steps"><li>Abre la hoja de Google Sheets que usarás para el evento.</li><li>Compártela como <strong>Editor</strong> con esta cuenta:</li></ol><code class="integration-email">${escape(sheet.serviceEmail)}</code><p style="margin-bottom:20px">Después pega el enlace de la hoja aquí. La aplicación creará sus propias pestañas sin tocar las demás.</p>` : '<div class="survey-notice">El guardado en Supabase ya funciona. La copia automática a Google Sheets necesita las credenciales de Google; mientras tanto, usa Descargar respuestas (CSV).</div>'}<form id="sheet-form" style="margin-top:22px"><div class="field"><label for="sheet-url">Enlace de Google Sheets</label><input id="sheet-url" name="url" type="url" placeholder="https://docs.google.com/spreadsheets/d/..." value="${escape(sheet.url || sheet.suggestedUrl || '')}" required><small>Las respuestas y los resultados se copiarán a pestañas con el prefijo Halloween_.</small></div><div class="panel-actions"><button type="submit" class="btn btn-primary" ${sheet.credentialsConfigured ? '' : 'disabled'}>${sheet.connected ? 'Verificar y enlazar' : 'Enlazar mi hoja'} ${icon('arrow')}</button>${sheet.connected ? '<button type="button" class="btn btn-secondary" data-action="sync">'+icon('refresh')+' Sincronizar pendientes</button>' : ''}</div></form>${sheet.lastError ? `<div class="page-error">${escape(sheet.lastError)}</div>` : ''}${sheet.lastSyncAt ? `<p class="fine-print">Última sincronización: ${escape(new Date(sheet.lastSyncAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' }))}</p>` : ''}${sheet.url ? `<a class="text-button" href="${escape(sheet.url)}" target="_blank" rel="noopener noreferrer">Abrir Google Sheets ${icon('arrow')}</a>` : ''}<details class="integration-details" style="margin-top:15px"><summary>¿Qué pasa si Google deja de responder?</summary><p>La aplicación guarda primero cada voto en su base de datos. Las respuestas pendientes se reintentan con la siguiente participación y cuando actualizas el panel. También puedes pulsar “Sincronizar pendientes”. El conteo del ganador siempre usa los votos confirmados.</p></details></section></div>`;
 }
+function testsPage() {
+  const tests = adminData.tests || { total: 0, responses: [] }, sheet = tests.sheet || {};
+  return `<section class="panel test-panel"><div class="eyebrow">ENSAYOS · SIN VOTOS REALES</div><h2>Comprueba todo antes de abrir.</h2><p>Usa el mismo formulario. Los ensayos se guardan aparte y se copian a <strong>Halloween_Pruebas</strong>. No modifican el ganador ni las respuestas reales.</p><div class="connection-state" data-test-summary>${tests.total} ensayos · ${sheet.connected ? sheet.pending ? `${sheet.pending} pendientes de copiar a Google` : 'Copia a Google al día' : 'Guardados en la base de datos'}</div>${sheet.lastError ? `<p class="page-error">${escape(sheet.lastError)}</p>` : ''}<div class="panel-actions"><button class="btn btn-primary" data-action="start-test">Probar el formulario ${icon('arrow')}</button>${sheet.connected ? `<button class="btn btn-secondary" data-action="sync">${icon('refresh')} Sincronizar pendientes</button>` : ''}<button class="text-button" data-action="confirm-reset-tests" ${tests.total ? '' : 'disabled'}>Eliminar registros de prueba</button></div><p class="fine-print">El reinicio elimina únicamente los ensayos de la aplicación y de Halloween_Pruebas. Los ${adminData.total} votos reales se conservan.</p></section><div class="subheading"><div><h2>Registros de prueba.</h2><p>Solo el anfitrión puede crearlos o eliminarlos.</p></div></div>${tests.total ? responsesTable(tests.responses.slice().reverse()) : '<div class="empty-state"><h2>Sin ensayos guardados.</h2><p>Pulsa Probar el formulario para verificar un envío completo.</p></div>'}`;
+}
 function adminPage() {
   if (!adminData) return loginPage();
-  return `<div class="container"><div class="admin-head"><div><div class="eyebrow">EL CUARTEL DEL ANFITRIÓN</div><h1>Aquí se guarda <em>el misterio.</em></h1><p>${escape(adminData.event.title)} · ${escape(adminData.event.edition)}</p></div><div class="admin-head-actions"><button class="btn btn-secondary btn-small" data-action="refresh-admin">${icon('refresh')} Actualizar</button><button class="text-button" data-action="logout">Salir ${icon('lock')}</button></div></div><nav class="admin-tabs" aria-label="Secciones del panel">${[['overview', 'Resumen'], ['share', 'Compartir enlace'], ['responses', 'Respuestas'], ['settings', 'Configuración']].map(([key, name]) => `<button class="tab ${key === adminTab ? 'active' : ''}" data-tab="${key}" ${key === adminTab ? 'aria-current="page"' : ''}>${name}</button>`).join('')}</nav>${errorBox()}${adminTab === 'overview' ? overview() : adminTab === 'share' ? sharePage() : adminTab === 'settings' ? settingsPage() : `<div class="subheading"><div><h2>El archivo de la noche.</h2><p>${adminData.total} participaciones registradas.</p></div><button class="btn btn-secondary btn-small" data-action="export">${icon('download')} Descargar CSV</button></div>${responsesTable(adminData.responses.slice().reverse())}`}<div style="height:45px"></div></div>`;
+  return `<div class="container"><div class="admin-head"><div><div class="eyebrow">EL CUARTEL DEL ANFITRIÓN</div><h1>Aquí se guarda <em>el misterio.</em></h1><p>${escape(adminData.event.title)} · ${escape(adminData.event.edition)}</p></div><div class="admin-head-actions"><button class="btn btn-secondary btn-small" data-action="refresh-admin">${icon('refresh')} Actualizar</button><button class="text-button" data-action="logout">Salir ${icon('lock')}</button></div></div><nav class="admin-tabs" aria-label="Secciones del panel">${[['overview', 'Resumen'], ['share', 'Compartir enlace'], ['responses', 'Respuestas'], ...(runtime !== 'demo' ? [['tests', 'Pruebas']] : []), ['settings', 'Configuración']].map(([key, name]) => `<button class="tab ${key === adminTab ? 'active' : ''}" data-tab="${key}" ${key === adminTab ? 'aria-current="page"' : ''}>${name}</button>`).join('')}</nav>${errorBox()}${adminTab === 'overview' ? overview() : adminTab === 'share' ? sharePage() : adminTab === 'tests' ? testsPage() : adminTab === 'settings' ? settingsPage() : `<div class="subheading"><div><h2>El archivo de la noche.</h2><p>${adminData.total} participaciones registradas.</p></div><button class="btn btn-secondary btn-small" data-action="export">${icon('download')} Descargar CSV</button></div>${responsesTable(adminData.responses.slice().reverse())}`}<div style="height:45px"></div></div>`;
 }
 function winnerPage() {
   if (!revealData) return adminPage();
@@ -293,13 +308,29 @@ document.addEventListener('click', async event => {
     if (control.dataset.tab) { adminTab = control.dataset.tab; view = 'admin'; render(); return; }
     if (control.dataset.invite) return await copy(invitationUrl(control.dataset.invite));
     if (control.dataset.response) {
-      const r = adminData.responses.find(r => r.id === control.dataset.response);
+      const r = [...adminData.responses, ...(adminData.tests?.responses || [])].find(r => r.id === control.dataset.response);
       openDialog(`Respuestas de ${r.name}`, `<div class="response-detail">${publicData.questions.map((q, i) => `<div class="review-row"><small>${i + 1}. ${escape(q.prompt)}</small><p>${escape(answerLabel(q, r.answers))}</p></div>`).join('')}</div>`); return;
     }
     if (control.dataset.setStatus !== undefined) {
       $('#modal').close(); return await busy($('#main [data-action="confirm-close"]') || $('#main [data-action="confirm-open"]'), async () => { await rpc('setStatus', { token, open: control.dataset.setStatus === 'true' }); await loadAdmin(); render(); notify(adminData.event.open ? 'La urna volvió a abrirse.' : 'Votación cerrada. Ya puedes revelar el resultado.'); });
     }
     switch (control.dataset.action) {
+      case 'start-test':
+        if (!token || runtime === 'demo') break;
+        testMode = true; storageKey = `halloween-test-${runtime}-${publicData.event.edition}-${QUESTIONNAIRE_VERSION}`;
+        draft = createDraft(publicData.event.edition); draft.name = 'PRUEBA · ' + new Date().toLocaleTimeString('es-CO');
+        saveDraft(); view = 'home'; render(); await startGuest(); break;
+      case 'fill-test':
+        if (!testMode || draft.pending || draft.receipt) break;
+        draft.answers = Object.fromEntries(publicData.questions.map((q, i) => [q.id, q.options[i % q.options.length].value]));
+        saveDraft(); refreshSurvey(); break;
+      case 'exit-test':
+        testMode = false; publicData = await rpc('public'); restoreGuestDraft();
+        await loadAdmin(); adminTab = 'tests'; view = 'admin'; render(); break;
+      case 'confirm-reset-tests':
+        openDialog('Eliminar registros de prueba', `<p>Se eliminarán ${adminData.tests?.total || 0} ensayos de la aplicación y de <strong>Halloween_Pruebas</strong>. Los ${adminData.total} votos reales se conservarán.</p><div class="panel-actions"><button class="btn btn-primary" data-action="reset-tests">Eliminar los ensayos</button><button class="btn btn-secondary" data-action="close-dialog">Cancelar</button></div>`); break;
+      case 'reset-tests':
+        await busy(control, async () => { await rpc('resetTests', { token }); $('#modal').close(); await loadAdmin(); adminTab = 'tests'; view = 'admin'; render(); notify('Registros de prueba eliminados. Los votos reales se conservaron.'); }); break;
       case 'home': if (view !== 'home') { view = 'home'; render(); } else window.scrollTo({ top: 0, behavior: motion ? 'smooth' : 'auto' }); break;
       case 'start': await startGuest(); break;
       case 'dialog-start': $('#modal').close(); await startGuest(); break;
@@ -309,10 +340,10 @@ document.addEventListener('click', async event => {
       case 'reading': reading = !reading; try { localStorage.setItem('halloween-reading', reading ? 'on' : 'off'); } catch {} renderChrome(); if (keyboardNavigation) $('[data-action=reading]')?.focus(); announce(reading ? 'Letra ampliada.' : 'Tamaño de letra habitual.'); break;
       case 'demo-reset': if (runtime !== 'demo') break; await resetDemo(); token = null; adminData = null; revealData = null; invitationError = ''; draft = createDraft(publicData.event.edition); draft.code = 'HALLOWEEN-DEMO'; saveDraft(); prefetchedCode = ''; history.replaceState(null, '', '/demo'); view = 'home'; await boot(); notify('La prueba está lista para empezar otra vez.'); break;
       case 'download-receipt': if (draft.receipt) download(`${runtime === 'demo' ? 'DEMOSTRACIÓN · Sin voto real\n\n' : ''}${publicData.event.title} · ${publicData.event.edition}\nParticipación confirmada\n\nInvitado: ${draft.name}\nComprobante: ${draft.receipt.id}\nFecha: ${new Date(draft.receipt.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' })} · Colombia\n`, `comprobante-halloween-${publicData.event.edition}.txt`, 'text/plain;charset=utf-8'); break;
-      case 'admin': if (token) { await busy(control, async () => { await loadAdmin(); view = 'admin'; render(); }); } else { view = 'login'; render(); } break;
+      case 'admin': if (testMode) { testMode = false; restoreGuestDraft(); } if (token) { await busy(control, async () => { await loadAdmin(); view = 'admin'; render(); }); } else { view = 'login'; render(); } break;
       case 'demo-admin': await busy(control, async () => { const session = await demoLogin(); token = session.token; await loadAdmin(); view = 'admin'; render(); }); break;
       case 'refresh-admin': await busy(control, async () => { await loadAdmin(); render(); notify('Panel actualizado.'); }); break;
-      case 'logout': await busy(control, async () => { await rpc('logout', { token }); token = null; adminData = null; view = 'login'; render(); }); break;
+      case 'logout': await busy(control, async () => { await rpc('logout', { token }); token = null; adminData = null; testMode = false; restoreGuestDraft(); view = 'login'; render(); }); break;
       case 'export': await busy(control, async () => { const data = await rpc('export', { token }); download(data.csv, data.filename); notify('Descarga preparada.'); }); break;
       case 'sync': await busy(control, async () => { await rpc('syncSheet', { token }); await loadAdmin(); render(); notify('Sincronización terminada.'); }); break;
       case 'copy-shared': await copy(new URL(runtime === 'demo' ? '/demo' : '/', location.origin).href); break;
@@ -328,12 +359,7 @@ document.addEventListener('click', async event => {
 });
 async function boot() {
   try {
-    publicData = await rpc('public'); storageKey = `halloween-draft-${runtime}-${publicData.event.edition}-${QUESTIONNAIRE_VERSION}`;
-    let saved; try { saved = localStorage.getItem(storageKey); } catch {}
-    draft = reconcileDraft(restoreDraft(saved, publicData.event.edition), publicData.questions, publicData.event.edition);
-    if (runtime === 'demo' && !draft.code) draft.code = 'HALLOWEEN-DEMO';
-
-    saveDraft(); render();
+    publicData = await rpc('public'); restoreGuestDraft(); render();
   } catch (error) {
     main.innerHTML = `<section class="success-page"><div class="success-emblem">${icon('ghost')}</div><h1>La puerta está<br><em>un poquito atascada.</em></h1><p>${escape(error.message || 'No pudimos cargar el formulario. Vuelve a intentarlo en un momento.')}</p><button class="btn btn-primary" data-action="retry-boot" style="margin-top:25px">Volver a intentar ${icon('refresh')}</button></section>`;
   }

@@ -4,7 +4,7 @@ Fecha: 23 de octubre de 2026. Entorno local: Windows y Node.js 24.16.0.
 
 ## Resultado de las pruebas
 
-La ejecución de `npm test` construyó ambos clientes y completó **57 pruebas aprobadas, 0 fallidas**, después de actualizar la música y el inicio automático. Los tamaños de construcción y las verificaciones de la carpeta de entrega se registran al final de este documento.
+La ejecución de `npm test` construyó ambos clientes y completó **64 pruebas aprobadas, 0 fallidas**, después de añadir los ensayos y su reinicio. Los tamaños de construcción y las verificaciones de la carpeta de entrega se registran al final de este documento.
 
 La construcción verificó que el cliente real no incluye módulos privados del servidor, secretos ni el transporte ficticio de demostración. Se copian las tres fotos y la pista MP3 a la salida de Vercel.
 
@@ -47,6 +47,8 @@ Las pruebas verifican intento de inicio automático, recuperación tras `NotAllo
 Las pruebas de control usan HTMLMediaElement simulado; no certifican la reproducción audible en un dispositivo real. No hubo capacidad de escucha disponible. La fuente y regeneración están documentadas en `design/audio/README.md`.
 
 ## Servidor y persistencia
+
+El modo Pruebas exige sesión del anfitrión, valida las 23 respuestas, mantiene la idempotencia y registra en una colección y pestaña independientes. Las pruebas verifican que no altera el ganador, el total real ni el CSV. La interfaz completa permite llenar, guardar y reiniciar los ensayos sin perder un borrador real. El reinicio conserva los votos reales; si falla el borrado de Google, se conservan los ensayos para reintentar.
 
 Continúan pasando las pruebas de validación de respuestas, invitaciones de un solo uso, idempotencia, sesiones, limitación de intentos, privacidad, cierre, mayoría, empate, ausencia de votos y CSV seguro.
 

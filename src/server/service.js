@@ -6,7 +6,7 @@ export class AppError extends Error {
 }
 const fail = (code, message) => { throw new AppError(code, message); };
 const clone = value => JSON.parse(JSON.stringify(value));
-export const emptyState = () => ({ config: clone(DEFAULT_EVENT), invitations: [], responses: [], sessions: [], auth: null, attempts: {} });
+export const emptyState = () => ({ config: clone(DEFAULT_EVENT), invitations: [], responses: [], testResponses: [], sessions: [], auth: null, attempts: {} });
 const normalizeCode = code => String(code ?? '').toUpperCase().replace(/[\s-]/g, '');
 const prettyCode = code => normalizeCode(code).match(/.{1,6}/g)?.join('-') ?? '';
 const voterIdentity = name => digest(String(name).normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[\p{P}\p{S}\s]+/gu, ' ').trim());
@@ -88,11 +88,26 @@ export function createService({ store, now = Date.now, randomId, passwordIterati
       state.responses.push(response);
       return { status: 'recorded', receipt: { id: response.id, createdAt: response.createdAt } };
     }
-    const adminActions = ['admin', 'createInvites', 'setStatus', 'updateEvent', 'reveal', 'export', 'logout'];
+    const adminActions = ['admin', 'submitTest', 'resetTests', 'createInvites', 'setStatus', 'updateEvent', 'reveal', 'export', 'logout'];
     if (!adminActions.includes(action)) fail('UNKNOWN_ACTION', 'Esta acción no está disponible.');
     authorized(state, payload.token);
+    if (action === 'resetTests') {
+      const removed = state.testResponses?.length || 0;
+      state.testResponses = [];
+      if (state.sheet) { state.sheet.testSyncedIds = []; state.sheet.testLastError = null; state.sheet.testLastSyncAt = null; }
+      return { removed };
+    }
+    if (action === 'submitTest') {
+      const ballot = validateBallot(state, payload);
+      state.testResponses ||= [];
+      const prior = state.testResponses.find(r => r.id === ballot.id);
+      if (prior && prior.fingerprint !== ballot.fingerprint) fail('ID_CONFLICT', 'Esta prueba ya se registró con otras respuestas. Inicia una nueva prueba.');
+      const response = prior || { ...ballot, code: 'TEST-' + ballot.id, test: true, createdAt: new Date(now()).toISOString() };
+      if (!prior) state.testResponses.push(response);
+      return { status: 'recorded', receipt: { id: response.id, createdAt: response.createdAt, test: true } };
+    }
     if (action === 'logout') { state.sessions = state.sessions.filter(s => s.hash !== digest(payload.token)); return { loggedOut: true }; }
-    if (action === 'admin') return { event: clone(state.config), total: state.responses.length, invitations: invitations(state), responses: clone(state.responses), sheetUrl, result: state.config.revealedAt && !state.config.open ? tally(state) : null, mode };
+    if (action === 'admin') return { event: clone(state.config), total: state.responses.length, invitations: invitations(state), responses: clone(state.responses), tests: { total: state.testResponses?.length || 0, responses: clone(state.testResponses || []) }, sheetUrl, result: state.config.revealedAt && !state.config.open ? tally(state) : null, mode };
     if (action === 'createInvites') {
       const names = Array.isArray(payload.names) ? payload.names.map(n => cleanText(n, 80)) : [];
       const count = names.length || payload.count;

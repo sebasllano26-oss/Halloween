@@ -10,6 +10,8 @@ function columnName(number) {
   return name;
 }
 const LAST_RESPONSE_COLUMN = columnName(HEADERS.length);
+const TEST_TAB = 'Halloween_Pruebas';
+const responseRow = (r, config) => [r.id, r.createdAt, r.name, r.code, ...QUESTIONS.map(q => q.id === 'vote' ? config.candidates.find(c => c.id === r.answers.vote)?.name || '' : q.options.find(o => o.value === r.answers[q.id])?.label || '')];
 export function parseSpreadsheetId(value) {
   const text = String(value || '').trim();
   if (/^[A-Za-z0-9_-]{20,100}$/.test(text)) return text;
@@ -63,7 +65,7 @@ export function createSheetsClient({ request, now = () => new Date().toISOString
       const known = new Set((recorded.values || []).map(row => String(row[0])));
       const pending = state.responses.filter(r => !known.has(r.id));
       if (pending.length) {
-        const rows = pending.map(r => [r.id, r.createdAt, r.name, r.code, ...QUESTIONS.map(q => q.id === 'vote' ? state.config.candidates.find(c => c.id === r.answers.vote)?.name || '' : q.options.find(o => o.value === r.answers[q.id])?.label || '')]);
+        const rows = pending.map(r => responseRow(r, state.config));
         await request(values(id, `${TAB.responses}!A:${LAST_RESPONSE_COLUMN}`) + ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS', { method: 'POST', json: { values: rows } });
       }
       const result = tally(state);
@@ -78,6 +80,37 @@ export function createSheetsClient({ request, now = () => new Date().toISOString
       await batch(id, data);
       state.sheet.syncedIds = state.responses.map(r => r.id); state.sheet.lastSyncAt = now(); state.sheet.lastError = null;
       return { synced: state.sheet.syncedIds.length, pending: 0 };
+    },
+    async clearTests(id) {
+      const metadata = await request(`/spreadsheets/${id}?fields=sheets.properties`);
+      const tab = metadata.sheets?.find(s => s.properties.title === TEST_TAB)?.properties;
+      if (!tab) return { cleared: true };
+      const first = await request(values(id, `${TEST_TAB}!A1:${LAST_RESPONSE_COLUMN}1`));
+      if (JSON.stringify(first.values?.[0] || []) !== JSON.stringify(HEADERS)) throw new AppError('SHEET_CONFLICT', 'No se borró Halloween_Pruebas porque sus encabezados no pertenecen a la aplicación.');
+      await request(values(id, `${TEST_TAB}!A2:${LAST_RESPONSE_COLUMN}`) + ':clear', { method: 'POST', json: {} });
+      return { cleared: true };
+    },
+    async syncTests(state) {
+      const id = state.sheet?.spreadsheetId;
+      if (!id) return { synced: 0, pending: state.testResponses?.length || 0 };
+      const metadata = await request(`/spreadsheets/${id}?fields=sheets.properties`);
+      const tab = metadata.sheets?.find(s => s.properties.title === TEST_TAB)?.properties;
+      if (!tab) {
+        await request(`/spreadsheets/${id}:batchUpdate`, { method: 'POST', json: { requests: [{ addSheet: { properties: { title: TEST_TAB, gridProperties: { frozenRowCount: 1, columnCount: HEADERS.length } } } }] } });
+      } else {
+        const columns = tab.gridProperties?.columnCount ?? HEADERS.length;
+        const first = await request(values(id, `${TEST_TAB}!A1:${columnName(Math.min(columns, HEADERS.length))}1`));
+        if (first.values?.length && JSON.stringify(first.values[0]) !== JSON.stringify(HEADERS)) throw new AppError('SHEET_CONFLICT', 'Halloween_Pruebas tiene encabezados incompatibles; se conservan sus datos.');
+        if (columns < HEADERS.length) await request(`/spreadsheets/${id}:batchUpdate`, { method: 'POST', json: { requests: [{ updateSheetProperties: { properties: { sheetId: tab.sheetId, gridProperties: { columnCount: HEADERS.length } }, fields: 'gridProperties.columnCount' } }] } });
+      }
+      await request(values(id, `${TEST_TAB}!A1:${LAST_RESPONSE_COLUMN}1`) + '?valueInputOption=RAW', { method: 'PUT', json: { values: [HEADERS] } });
+      const recorded = await request(values(id, TEST_TAB + '!A2:A'));
+      const known = new Set((recorded.values || []).map(row => String(row[0])));
+      const pending = (state.testResponses || []).filter(r => !known.has(r.id));
+      if (pending.length) await request(values(id, `${TEST_TAB}!A:${LAST_RESPONSE_COLUMN}`) + ':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS', { method: 'POST', json: { values: pending.map(r => responseRow(r, state.config)) } });
+      state.sheet.testSyncedIds = (state.testResponses || []).map(r => r.id);
+      state.sheet.testLastSyncAt = now(); state.sheet.testLastError = null;
+      return { synced: state.sheet.testSyncedIds.length, pending: 0 };
     },
   };
 }

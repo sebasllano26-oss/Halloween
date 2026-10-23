@@ -12,6 +12,7 @@ export function createRuntime({ repository, mode = 'vercel', initialPassword, pa
     credentialsConfigured: Boolean(sheets), pending: state.responses.filter(r => !state.sheet?.syncedIds?.includes(r.id)).length,
     lastSyncAt: state.sheet?.lastSyncAt || null, lastError: state.sheet?.lastError || null,
   });
+  const testSheetStatus = state => ({ connected: Boolean(state.sheet?.spreadsheetId), pending: (state.testResponses || []).filter(r => !state.sheet?.testSyncedIds?.includes(r.id)).length, lastSyncAt: state.sheet?.testLastSyncAt || null, lastError: state.sheet?.testLastError || null });
   async function transact(work) {
     let error;
     const value = await repository.transaction(async state => {
@@ -37,23 +38,45 @@ export function createRuntime({ repository, mode = 'vercel', initialPassword, pa
       return { synced: state.sheet.syncedIds.length, pending: state.responses.length - state.sheet.syncedIds.length };
     }
   }
+  async function syncTests(state, strict = false) {
+    if (!state.testResponses?.length) return;
+    if (!state.sheet.spreadsheetId || !sheets) return;
+    try { await sheets.syncTests(state); }
+    catch {
+      state.sheet.testLastError = 'La prueba está guardada. Google no confirmó su copia; pulsa Sincronizar pendientes para reintentar.';
+      if (strict) throw new AppError('SHEETS_UNAVAILABLE', state.sheet.testLastError);
+    }
+  }
   return {
     setup(password) { if (mode !== 'local' && mode !== 'test') throw new AppError('FORBIDDEN', 'La clave inicial se configura en Vercel.'); return transact((state, service) => service.initialize(password)); },
     async call(action, payload = {}) {
       const value = await transact(async (state, service) => {
+        if (action === 'resetTests') {
+          service.handle('admin', { token: payload.token });
+          if (state.sheet.spreadsheetId) {
+            if (!sheets) throw new AppError('SHEETS_NOT_CONFIGURED', 'No se pudo borrar la copia de pruebas: faltan las credenciales de Google.');
+            try { await sheets.clearTests(state.sheet.spreadsheetId); }
+            catch { throw new AppError('SHEETS_UNAVAILABLE', 'No se confirmó el borrado en Google. Se conservan las pruebas para que puedas reintentar.'); }
+          }
+          return service.handle('resetTests', { token: payload.token });
+        }
         if (action === 'connectSheet' || action === 'syncSheet') {
           service.handle('admin', { token: payload.token });
-          if (action === 'syncSheet') return await syncState(state, true);
+          if (action === 'syncSheet') { const result = await syncState(state, true); await syncTests(state, true); return result; }
           const id = parseSpreadsheetId(payload.url);
           if (!sheets) throw new AppError('SHEETS_NOT_CONFIGURED', 'Configura GOOGLE_SERVICE_ACCOUNT_EMAIL y GOOGLE_PRIVATE_KEY en Vercel.');
           const connection = await sheets.connect(id, state.config);
           state.sheet = { ...connection, syncedIds: [], lastSyncAt: null, lastError: null };
-          await syncState(state, true); return { connected: true, ...sheetStatus(state) };
+          await syncState(state, true); await syncTests(state, true); return { connected: true, ...sheetStatus(state) };
         }
         const data = service.handle(action, payload);
-        if (action === 'admin') { await syncState(state); data.sheet = sheetStatus(state); }
+        if (action === 'admin') { await syncState(state); await syncTests(state); data.sheet = sheetStatus(state); data.tests.sheet = testSheetStatus(state); }
         return data;
       });
+      if (action === 'submitTest') {
+        try { return await transact(async state => { await syncTests(state); return { ...value, sheet: testSheetStatus(state) }; }); }
+        catch { return { ...value, sheet: { pending: 1, lastError: 'La prueba está guardada; su copia a Google está pendiente.' } }; }
+      }
       // Commit the ballot before attempting Google. A failure never reverses a confirmed vote.
       if (['submit', 'setStatus', 'reveal', 'createInvites', 'updateEvent'].includes(action)) {
         try { await transact(state => syncState(state)); } catch { /* Durable responses remain available for retry. */ }

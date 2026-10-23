@@ -10,6 +10,12 @@ El administrador entra en https://vele-rouge.vercel.app/admin con la clave del a
 
 La música de Halloween intenta empezar al abrir el enlace. Si el navegador requiere un toque, comienza con la primera interacción. La barra visible permite silenciarla y ajustar el volumen; después de silenciarla, no vuelve a sonar por pulsar las respuestas.
 
+## Probar y reiniciar los ensayos
+
+Entra como anfitrión y abre **Pruebas → Probar el formulario**. Puedes llenarlo a mano o pulsar **Completar con respuestas de prueba**, cambiar cualquier selección y enviarlo. El comprobante confirma el guardado y la copia a **Halloween_Pruebas**. Los ensayos no cuentan para el ganador y no aparecen en el CSV de votos reales.
+
+En **Pruebas → Eliminar registros de prueba**, confirma **Eliminar los ensayos** para limpiar únicamente las pruebas de la base y de Google. Los votos reales se conservan. Si Google no confirma el borrado, el panel conserva los registros para reintentar.
+
 ## Base de datos y hoja de cálculo
 
 **Supabase ya está conectado y guarda las respuestas.** La descarga CSV del panel se puede abrir en Excel o importar en Google Sheets.

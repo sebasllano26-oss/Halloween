@@ -116,6 +116,12 @@ El formulario usa una superficie clara de lectura, opciones grandes y selección
 
 La música es un vals original de Halloween de 48 segundos con órgano, campanas, caja de música y theremín suave, preparado para repetirse. Intenta comenzar al abrir la página, con volumen inicial del 18 %. Si el navegador bloquea el sonido automático, empieza con el primer clic, toque o tecla de escritura. **Silenciar música** la pausa; seguirá en silencio mientras respondes hasta que decidas activarla otra vez. El volumen se puede ajustar. El MP3 se sirve desde el propio proyecto, sin reproductores externos. Su fuente y composición están en `design/audio/README.md`.
 
+## Ensayos con guardado real
+
+El panel incluye **Pruebas**. La misma encuesta permite ensayos autenticados mediante `submitTest`; se guardan en `testResponses` y en la pestaña `Halloween_Pruebas`, creada con el primer ensayo. El resultado, las respuestas públicas y el CSV real solo utilizan `responses`. Los borradores de ensayo usan otra clave local. Se puede probar aun con la urna cerrada.
+
+**Eliminar registros de prueba** requiere sesión del anfitrión. Primero verifica y vacía únicamente `Halloween_Pruebas!A2:AA`; después elimina `testResponses`. Conserva encabezados, votos, resultados e invitados. Si Google falla, mantiene los ensayos para reintentar. El acceso público no permite registrar ni borrar ensayos.
+
 GSAP coordina la entrada de la portada, el fantasma flotante, la niebla, las luces y la revelación. Se respeta la preferencia de movimiento reducido del dispositivo y se cancelan los movimientos al usar el teclado. Al terminar, el comprobante aparece debajo de las respuestas, dentro de la misma página, y puede descargarse en texto.
 
 El arte decorativo se generó para este proyecto con la herramienta integrada de imágenes; sus fuentes y derivados están documentados en `design/ASSETS.md`. Las fotos de los participantes son las adjuntadas por el usuario; si falla una foto se muestran sus iniciales. Las tipografías Cormorant Garamond y DM Sans se solicitan a Google Fonts; si no cargan, se usan fuentes del sistema.
