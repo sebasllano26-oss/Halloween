@@ -34,12 +34,10 @@ test('HTTP real: persistencia, solicitudes simultáneas, sesión y rechazo de or
   assert.equal((await post('/api/setup', { password: 'Segunda clave que no sirve' })).body.error.code, 'ALREADY_CONFIGURED');
   const login = await post('/api/rpc', { action: 'login', payload: { password: 'Una clave local de pruebas!' } });
   const token = login.body.data.token;
-  const invites = await post('/api/rpc', { action: 'createInvites', payload: { token, count: 1 } });
-  const code = invites.body.data.invitations[0].code;
-  const payload = { id: randomUUID(), name: 'Invitado HTTP', code, answers: Object.fromEntries(QUESTIONS.map(q => [q.id, q.id === 'vote' ? 'antonia' : '0'])) };
+  const payload = { id: randomUUID(), name: 'Invitado HTTP', answers: Object.fromEntries(QUESTIONS.map(q => [q.id, q.id === 'vote' ? 'antonia' : '0'])) };
   const attempts = await Promise.all([post('/api/rpc', { action: 'submit', payload }), post('/api/rpc', { action: 'submit', payload: { ...payload, id: randomUUID() } })]);
   assert.equal(attempts.filter(x => x.body.ok).length, 1);
-  assert.equal(attempts.find(x => !x.body.ok).body.error.code, 'INVITE_USED');
+  assert.equal(attempts.find(x => !x.body.ok).body.error.code, 'VOTE_ALREADY_RECORDED');
   assert.equal((await post('/api/rpc', { action: 'admin', payload: { token } })).body.data.total, 1);
   assert.equal((await post('/api/rpc', { action: 'public' }, 'https://otro-sitio.invalid')).status, 403);
   assert.equal((await post('/api/rpc', { action: 'admin', payload: { token: 'falso' } })).body.error.code, 'AUTH_REQUIRED');

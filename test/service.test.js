@@ -29,13 +29,13 @@ test('rechaza reutilizar el identificador con otras respuestas', () => {
   const f = fixture(); const payload = f.ballot(f.codes()[0]); f.service.handle('submit', payload);
   rejectsCode(() => f.service.handle('submit', { ...payload, name: 'Otra persona' }), 'ID_CONFLICT');
 });
-test('un código no permite votar desde un segundo dispositivo', () => {
+test('el mismo nombre no permite votar desde un segundo dispositivo', () => {
   const f = fixture(); const code = f.codes()[0]; f.service.handle('submit', f.ballot(code));
-  rejectsCode(() => f.service.handle('submit', f.ballot(code)), 'INVITE_USED');
+  rejectsCode(() => f.service.handle('submit', f.ballot(code)), 'VOTE_ALREADY_RECORDED');
 });
-test('rechaza códigos inválidos y valida invitaciones sin revelar al invitado', () => {
+test('el voto público ignora códigos antiguos y conserva compatibilidad de invitaciones anteriores', () => {
   const f = fixture(); const code = f.codes()[0];
-  rejectsCode(() => f.service.handle('submit', f.ballot('NO-EXISTE')), 'INVITE_INVALID');
+  assert.equal(f.service.handle('submit', f.ballot('NO-EXISTE')).status, 'recorded');
   assert.deepEqual(f.service.handle('checkInvite', { code }), { valid: true });
 });
 test('rechaza preguntas omitidas, opciones falsas y candidatos inventados', () => {

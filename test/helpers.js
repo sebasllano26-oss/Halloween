@@ -20,7 +20,7 @@ export function fixture() {
   const token = login();
   const codes = (count = 1) => service.handle('createInvites', { token, count }).invitations.map(x => x.code);
   const ballot = (code, vote = 'antonia') => ({
-    id: randomUUID(), name: 'Invitado de prueba', code,
+    id: randomUUID(), name: 'Invitado de prueba ' + (code || randomUUID()), code,
     answers: Object.fromEntries(QUESTIONS.map(q => [q.id, q.id === 'vote' ? vote : '0'])),
   });
   return { service, token, codes, ballot, login, state: () => state, advance: ms => { time += ms; } };

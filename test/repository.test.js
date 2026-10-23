@@ -39,11 +39,10 @@ test('PostgreSQL: esquema, transacciones y votos atómicos en un motor PostgreSQ
   assert.equal(admin.sheet.suggestedUrl, 'https://docs.google.com/spreadsheets/d/1_ypZV39tfxp4yRpLB3uYyQP7s9r3QhFGP0D0sY04bfs/edit');
   assert.equal(admin.sheet.connected, false, 'Sugerir la hoja no debe indicar que ya tiene permiso para escribir');
   assert.equal(JSON.stringify(await runtime.call('public')).includes('1_ypZV39tfxp4yRpLB3uYyQP7s9r3QhFGP0D0sY04bfs'), false);
-  const code = (await runtime.call('createInvites', { token, count: 1 })).invitations[0].code;
-  const payload = { id: randomUUID(), name: 'Invitado PostgreSQL', code, answers: Object.fromEntries(QUESTIONS.map(q => [q.id, q.id === 'vote' ? 'antonia' : '0'])) };
+  const payload = { id: randomUUID(), name: 'Invitado PostgreSQL', answers: Object.fromEntries(QUESTIONS.map(q => [q.id, q.id === 'vote' ? 'antonia' : '0'])) };
   const results = await Promise.allSettled([runtime.call('submit', payload), runtime.call('submit', { ...payload, id: randomUUID() })]);
   assert.equal(results.filter(r => r.status === 'fulfilled').length, 1);
-  assert.equal(results.find(r => r.status === 'rejected').reason.code, 'INVITE_USED');
+  assert.equal(results.find(r => r.status === 'rejected').reason.code, 'VOTE_ALREADY_RECORDED');
   const reloaded = createRuntime({ repository: createPostgresRepository(pool), mode: 'test', passwordIterations: 1000 });
   assert.equal((await reloaded.call('admin', { token })).total, 1);
   const stored = (await db.query('SELECT state FROM public.halloween_app_state WHERE id = $1', ['main'])).rows[0].state;

@@ -1,3 +1,5 @@
+> **Acceso actualizado:** comparte un solo enlace, https://vele-rouge.vercel.app/ . No se necesitan invitaciones ni códigos. El control de duplicados usa el nombre completo declarado, normalizando tildes, mayúsculas y espacios. Supabase guarda las respuestas; Google Sheets sigue siendo una copia opcional pendiente de credenciales. Consulta LEEME-PRIMERO.md para el uso actual.
+
 # Halloween Vélez López
 
 Aplicación web independiente para Vercel, con la experiencia **El baile de las sombras**, Supabase como base principal y una copia opcional en Google Sheets. No utiliza Apps Script. El tema de esta edición es **Objetos de cocina**.
@@ -97,16 +99,13 @@ Las pestañas son una salida del sistema. Para cambiar el evento o administrar i
 
 ## Usarlo el día del evento
 
-1. En **Configuración**, confirma edición, tema y participantes. Puedes cambiar o agregar participantes antes del primer voto.
-2. En **Invitaciones**, escribe un nombre por línea o crea entradas sin nombre asignado.
-3. Copia y comparte un enlace por invitado. El código ya viene incluido en el enlace; la persona solo escribe su nombre.
-4. Cada invitado responde las 22 preguntas de humor del archivo y el voto al mejor disfraz. Todas están abiertas en la misma página: puede cambiar cualquier respuesta antes de enviar. El formulario señala las preguntas pendientes y lleva al primer campo que falta.
-5. En el panel, consulta las participaciones y verifica que la hoja esté sincronizada.
-6. Pulsa **Cerrar las votaciones**, confirma el cierre y usa **Revelar al ganador**.
+1. Comparte https://vele-rouge.vercel.app/ con toda la familia.
+2. Cada persona escribe su nombre completo y responde las 23 preguntas en la misma página.
+3. El servidor bloquea otro voto con el mismo nombre completo, incluso al cambiar tildes, mayúsculas o espacios. No se verifica identidad mediante documentos o cuentas.
+4. En un dispositivo compartido, **Responder para otra persona** prepara un formulario vacío después del comprobante.
+5. El administrador revisa respuestas y descarga CSV. Al terminar, cierra las votaciones y revela al ganador.
 
-Solo cuenta la pregunta **El mejor disfraz**. Las preguntas de humor no suman ni restan votos. Si hay empate, se muestran todos los participantes empatados; si no hay votos, no se inventa un ganador.
-
-Los resultados son privados del administrador. Si quieres anunciarlos a la familia, puedes mostrar su pantalla de revelación. Reabrir la urna permite nuevos votos y exige cerrarla otra vez antes de revelar un resultado actualizado.
+Solo decide el ganador la pregunta **El mejor disfraz**. Si hay empate, se muestran todos los empatados.
 
 ## Diseño y accesibilidad
 
@@ -122,7 +121,7 @@ El arte decorativo se generó para este proyecto con la herramienta integrada de
 
 ## Guardado, privacidad y recuperación
 
-- Cada invitación se verifica en el servidor y permite un solo voto, incluso desde distintos dispositivos.
+- El nombre completo se verifica en el servidor y permite un solo voto con ese nombre, incluso desde distintos dispositivos.
 - Las respuestas se confirman después de guardar el registro en la base de datos.
 - Si se interrumpe la conexión, se conservan las respuestas y se reintenta el mismo envío. Mientras falta la confirmación, no se permite cambiar ese envío.
 - Las sesiones del administrador duran dos horas y sus tokens se conservan únicamente en memoria en el navegador. Recargar la página exige ingresar de nuevo.

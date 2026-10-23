@@ -9,6 +9,7 @@ const clone = value => JSON.parse(JSON.stringify(value));
 export const emptyState = () => ({ config: clone(DEFAULT_EVENT), invitations: [], responses: [], sessions: [], auth: null, attempts: {} });
 const normalizeCode = code => String(code ?? '').toUpperCase().replace(/[\s-]/g, '');
 const prettyCode = code => normalizeCode(code).match(/.{1,6}/g)?.join('-') ?? '';
+const voterIdentity = name => digest(String(name).normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[\p{P}\p{S}\s]+/gu, ' ').trim());
 const cleanText = (value, max) => typeof value === 'string' && value.trim().length > 0 && value.trim().length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value) ? value.trim() : fail('INVALID_INPUT', 'Revisa los campos: faltan datos o hay un texto demasiado largo.');
 const publicQuestions = config => QUESTIONS.map(q => q.id === 'vote' ? { ...q, options: config.candidates.map(c => ({ value: c.id, label: c.name })) } : q);
 export function tally(state) {
@@ -38,8 +39,9 @@ export function createService({ store, now = Date.now, randomId, passwordIterati
   function validateBallot(state, payload) {
     const id = cleanText(payload.id, 100);
     if (!/^[a-zA-Z0-9_-]{12,100}$/.test(id)) fail('INVALID_INPUT', 'El identificador de envío no es válido.');
-    const name = cleanText(payload.name, 80);
-    const code = normalizeCode(cleanText(payload.code, 80));
+    const name = cleanText(payload.name, 80).replace(/\s+/g, ' ');
+    const voterKey = voterIdentity(name);
+    const code = 'PUBLIC-' + voterKey.slice(0, 24).toUpperCase();
     const input = payload.answers;
     const questions = publicQuestions(state.config);
     if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).length !== questions.length) fail('INVALID_ANSWERS', `Responde las ${questions.length} preguntas antes de enviar.`);
@@ -48,11 +50,11 @@ export function createService({ store, now = Date.now, randomId, passwordIterati
       if (typeof input[q.id] !== 'string' || !q.options.some(o => o.value === input[q.id])) fail('INVALID_ANSWERS', 'Una respuesta no es válida. Revisa tu selección antes de enviar.');
       answers[q.id] = input[q.id];
     }
-    return { id, name, code, answers, fingerprint: digest(JSON.stringify({ name, code, answers })) };
+    return { id, name, code, voterKey, answers, fingerprint: digest(JSON.stringify({ name, answers })) };
   }
   function dispatch(state, action, payload) {
     state.sessions = state.sessions.filter(s => s.expiresAt > now());
-    if (action === 'public') return { event: clone(state.config), questions: publicQuestions(state.config), configured: Boolean(state.auth), mode };
+    if (action === 'public') return { event: clone(state.config), questions: publicQuestions(state.config), configured: Boolean(state.auth), mode, participation: 'public', duplicateRule: 'full_name' };
     if (action === 'login') {
       if (!state.auth) fail('NOT_CONFIGURED', 'El anfitrión todavía no ha activado el formulario.');
       if (state.attempts.lockedUntil > now()) fail('LOGIN_LOCKED', 'Demasiados intentos. Espera 15 minutos antes de volver a entrar.');
@@ -81,7 +83,7 @@ export function createService({ store, now = Date.now, randomId, passwordIterati
         return { status: 'recorded', receipt: { id: prior.id, createdAt: prior.createdAt } };
       }
       if (!state.config.open) fail('EVENT_CLOSED', 'La urna ya está cerrada. Tu voto no se registró.');
-      validInvite(state, ballot.code);
+      if (state.responses.some(r => (r.voterKey || voterIdentity(r.name)) === ballot.voterKey)) fail('VOTE_ALREADY_RECORDED', 'Este nombre completo ya tiene un voto registrado. Cada persona puede participar una sola vez. Si hay dos personas con el mismo nombre, consulta al anfitrión.');
       const response = { ...ballot, createdAt: new Date(now()).toISOString() };
       state.responses.push(response);
       return { status: 'recorded', receipt: { id: response.id, createdAt: response.createdAt } };
@@ -131,7 +133,7 @@ export function createService({ store, now = Date.now, randomId, passwordIterati
     }
     if (action === 'export') {
       const questions = publicQuestions(state.config);
-      const rows = [['Comprobante', 'Fecha del servidor (UTC)', 'Nombre', 'Invitación', ...questions.map(q => q.id === 'vote' ? 'El mejor disfraz' : q.prompt)]];
+      const rows = [['Comprobante', 'Fecha del servidor (UTC)', 'Nombre', 'Identificador de participación', ...questions.map(q => q.id === 'vote' ? 'El mejor disfraz' : q.prompt)]];
       for (const response of state.responses) rows.push([response.id, response.createdAt, response.name, prettyCode(response.code), ...questions.map(q => q.options.find(o => o.value === response.answers[q.id])?.label || '')]);
       const csv = '\uFEFF' + rows.map(row => row.map(value => '"' + safeCsvCell(value).replace(/"/g, '""') + '"').join(',')).join('\r\n');
       return { filename: `halloween-${state.config.edition}-respuestas.csv`, csv };

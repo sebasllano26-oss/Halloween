@@ -4,7 +4,7 @@ Fecha: 23 de octubre de 2026. Entorno local: Windows y Node.js 24.16.0.
 
 ## Resultado de las pruebas
 
-La ejecución de `npm test` construyó ambos clientes y completó **49 pruebas aprobadas, 0 fallidas**. Los tamaños de construcción y las verificaciones de la carpeta de entrega se registran al final de este documento.
+La ejecución de `npm test` construyó ambos clientes y completó **51 pruebas aprobadas, 0 fallidas**. Los tamaños de construcción y las verificaciones de la carpeta de entrega se registran al final de este documento.
 
 La construcción verificó que el cliente real no incluye módulos privados del servidor, secretos ni el transporte ficticio de demostración. Se copian las tres fotos y la pista MP3 a la salida de Vercel.
 
@@ -103,3 +103,9 @@ El despliegue del código `13c5684` quedó `READY` y asociado a `https://vele-ro
 La comprobación JSDOM del código publicado verificó las 23 preguntas habilitadas, siete secciones, 92 opciones, tres fotos y la presentación antes de la encuesta. La demo completó un llenado y produjo su comprobante con datos exclusivos del navegador, sin solicitar registros al servidor real. No se detectaron errores de ejecución en esa comprobación.
 
 La clave del administrador y la conexión permanecen en archivos privados del área `.local`, excluidos de GitHub y de la entrega para subir. Las pruebas con respuestas reales siguen pendientes de la indicación del usuario.
+
+## Acceso público sin invitaciones
+
+Se sustituyó el acceso por invitaciones por un enlace común. El formulario pide nombre completo y las 23 respuestas; no muestra ni envía códigos. El servidor bloquea nombres completos repetidos después de normalizar tildes, mayúsculas, puntuación y espacios. Este mecanismo identifica el nombre declarado, sin verificar identidad legal.
+
+Las 51 pruebas locales aprobaron. Se verifican el envío sin código, el rechazo del mismo nombre desde dos solicitudes concurrentes, el reintento sin duplicación y el uso de un dispositivo por otra persona. El panel ofrece el enlace común y muestra Supabase como guardado activo. La copia automática a Google Sheets sigue pendiente de credenciales; el CSV ya se puede descargar.

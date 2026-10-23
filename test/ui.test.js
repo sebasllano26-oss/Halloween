@@ -61,8 +61,7 @@ test('encuesta completa en una página: errores junto a la pregunta, cambios, re
   const rpc = async (action, payload) => (await (await fetch(origin + '/api/rpc', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin }, body: JSON.stringify({ action, payload }) })).json());
   await fetch(origin + '/api/setup', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin }, body: JSON.stringify({ password: 'Clave segura para probar la interfaz!' }) });
   const { token } = (await rpc('login', { password: 'Clave segura para probar la interfaz!' })).data;
-  const code = (await rpc('createInvites', { token, count: 1 })).data.invitations[0].code;
-  const p = page({ origin, local: true, url: '/?invite=' + code }), { w, $, waitFor, answer, submit } = p;
+  const p = page({ origin, local: true, url: '/' }), { w, $, waitFor, answer, submit } = p;
   t.after(async () => { p.dom.window.close(); await new Promise(resolve => server.close(resolve)); rmSync(dataDirectory, { recursive: true, force: true }); });
   let interruptFirstSubmit = true, submitCalls = 0;
   w.fetch = async (path, options = {}) => {
@@ -74,7 +73,7 @@ test('encuesta completa en una página: errores junto a la pregunta, cambios, re
   };
   p.boot(); await waitFor(() => $('#survey-form'));
   assert.equal(w.document.querySelectorAll('[data-question]').length, 23);
-  assert.equal($('#guest-code').value, code); assert.equal($('#guest-code').parentElement.hidden, true);
+  assert.equal($('#guest-code'), null);
   $('#guest-name').value = 'Invitado mayor de prueba'; $('#guest-name').dispatchEvent(new w.Event('input', { bubbles: true }));
   $('[data-action=reading]').click(); assert.equal(w.document.documentElement.classList.contains('comfortable-reading'), true);
   assert.equal($('#guest-name').value, 'Invitado mayor de prueba');
@@ -96,6 +95,10 @@ test('encuesta completa en una página: errores junto a la pregunta, cambios, re
   assert.match($('#survey-receipt').textContent, /Participación confirmada/);
   assert.equal((await rpc('admin', { token })).data.total, 1);
   assert.ok($('#sospechosos')); assert.ok($('#survey-form'));
+  $('[data-action=another-person]').click();
+  assert.equal($('#guest-name').value, ''); assert.equal($('#survey-receipt'), null);
+  assert.equal($('input[type=radio]:checked'), null);
+  assert.equal((await rpc('admin', { token })).data.total, 1);
   $('[data-action=admin]').click(); await waitFor(() => $('#login-form'));
   $('#admin-password').value = 'Clave segura para probar la interfaz!';
   $('#login-form').dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));
@@ -112,11 +115,8 @@ test('encuesta completa en una página: errores junto a la pregunta, cambios, re
   $('#event-title').value = 'La noche de prueba de los Vélez';
   $('#event-form').dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));
   await waitFor(() => !$('#event-form button[type=submit]').disabled && $('#toast').textContent.includes('guardados'));
-  $('[data-tab=invites]').click(); $('#invite-names').value = 'Tía de prueba\nTío de prueba';
-  $('#invites-form').dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));
-  await waitFor(() => $('[data-invite]') && w.document.body.textContent.includes('Tía de prueba'));
-  $('[data-invite]').click(); await waitFor(() => $('#copy-link'));
-  assert.match($('#copy-link').value, /\?invite=/); $('[data-action=close-dialog]').click();
+  $('[data-tab=share]').click(); $('[data-action=copy-shared]').click(); await waitFor(() => $('#copy-link'));
+  assert.equal($('#copy-link').value, origin + '/'); $('[data-action=close-dialog]').click();
   assert.deepEqual(p.errors, []);
 });
 
@@ -139,7 +139,7 @@ test('demo: música controlable y encuesta completa sin servidor ni pasos de ent
   $('[data-action=sound]').click(); await waitFor(() => $('[data-action=sound]').getAttribute('aria-pressed') === 'false');
   assert.ok(pauses > 0);
   $('#guest-name').value = 'Invitado de prueba'; $('#guest-name').dispatchEvent(new w.Event('input', { bubbles: true }));
-  assert.equal($('#guest-code').parentElement.hidden, true);
+  assert.equal($('#guest-code'), null);
   for (const q of QUESTIONS) answer(q.id);
   submit(); await waitFor(() => $('#survey-receipt'));
   assert.ok($('#sospechosos')); assert.equal(w.document.querySelectorAll('[data-question]').length, 23);
