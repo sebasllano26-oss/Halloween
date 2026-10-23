@@ -8,6 +8,8 @@ Este control usa el nombre declarado; no verifica documentos ni identidad. Si do
 
 El administrador entra en https://vele-rouge.vercel.app/admin con la clave del archivo privado entregado. Puede copiar el enlace común, revisar las respuestas, descargar CSV, cerrar la urna y revelar el ganador. La clave no se sube a GitHub.
 
+La música de Halloween intenta empezar al abrir el enlace. Si el navegador requiere un toque, comienza con la primera interacción. La barra visible permite silenciarla y ajustar el volumen; después de silenciarla, no vuelve a sonar por pulsar las respuestas.
+
 ## Base de datos y hoja de cálculo
 
 **Supabase ya está conectado y guarda las respuestas.** La descarga CSV del panel se puede abrir en Excel o importar en Google Sheets.

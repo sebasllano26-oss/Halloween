@@ -4,7 +4,7 @@ Fecha: 23 de octubre de 2026. Entorno local: Windows y Node.js 24.16.0.
 
 ## Resultado de las pruebas
 
-La ejecución de `npm test` construyó ambos clientes y completó **51 pruebas aprobadas, 0 fallidas**. Los tamaños de construcción y las verificaciones de la carpeta de entrega se registran al final de este documento.
+La ejecución de `npm test` construyó ambos clientes y completó **57 pruebas aprobadas, 0 fallidas**, después de actualizar la música y el inicio automático. Los tamaños de construcción y las verificaciones de la carpeta de entrega se registran al final de este documento.
 
 La construcción verificó que el cliente real no incluye módulos privados del servidor, secretos ni el transporte ficticio de demostración. Se copian las tres fotos y la pista MP3 a la salida de Vercel.
 
@@ -40,9 +40,9 @@ Los originales están en `design/photos`; las copias públicas en `public/assets
 
 ## Música
 
-Pista instrumental original sintetizada localmente. FFprobe verificó MP3, 32 segundos exactos, mono, 22.050 Hz y 385.098 bytes. La fuente WAV se normalizó a un pico de 0,65.
+Pista original regenerada como vals de Halloween con órgano, campanas graves, caja de música y theremín. FFprobe verificó MP3, 48 segundos exactos, estéreo, 32.000 Hz y 769.669 bytes. La fuente WAV se normalizó a un pico de 0,78. FFmpeg verificó un máximo del MP3 de −2,6 dBFS y media de −15,4 dBFS, sin saturación.
 
-Las pruebas verifican inicio por acción del invitado, bucle, volumen inicial del 18 %, cambio a 9 %, pausa y tratamiento de un fallo de reproducción sin indicar falsamente que la música está sonando. El archivo se sirve desde el mismo proyecto.
+Las pruebas verifican intento de inicio automático, recuperación tras `NotAllowedError` con clic/toque/tecla, respeto del silencio elegido, ausencia de inicios duplicados mientras carga, bucle, volumen inicial del 18 %, cambio a 9 % y fallo de reproducción sin indicar falsamente que la música está sonando. El archivo se sirve desde el mismo proyecto con una versión en la URL para renovar la caché.
 
 Las pruebas de control usan HTMLMediaElement simulado; no certifican la reproducción audible en un dispositivo real. No hubo capacidad de escucha disponible. La fuente y regeneración están documentadas en `design/audio/README.md`.
 

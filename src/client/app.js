@@ -349,4 +349,5 @@ document.addEventListener('keydown', () => {
 document.addEventListener('pointerdown', () => { keyboardNavigation = false; document.documentElement.classList.remove('keyboard-navigation'); }, { passive: true });
 document.addEventListener('error', event => { if (event.target.tagName === 'IMG' && event.target.closest('.portrait, .participant-photo')) event.target.closest('.portrait, .participant-photo').classList.add('asset-unavailable'); }, true);
 window.addEventListener('pagehide', () => soundtrack.pause());
+void soundtrack.autoplay(document);
 void boot();

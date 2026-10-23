@@ -131,8 +131,8 @@ test('demo: música controlable y encuesta completa sin servidor ni pasos de ent
   p.boot(); await waitFor(() => $('#survey-form'));
   assert.match($('#environment').textContent, /Demostraci/);
   assert.match(p.$('.cinema-kicker').textContent, /Halloween Vélez López/);
-  assert.equal(plays, 0, 'La música no debe comenzar antes de que el invitado la active');
-  $('[data-action=sound]').click(); await waitFor(() => $('[data-action=sound]').getAttribute('aria-pressed') === 'true');
+  await waitFor(() => $('[data-action=sound]').getAttribute('aria-pressed') === 'true');
+  assert.equal(plays, 1, 'La música intenta comenzar al abrir la página');
   assert.equal(plays, 1); assert.equal($('#soundtrack').loop, true); assert.equal($('#soundtrack').volume, .18);
   const volume = $('[data-music-volume]'); volume.value = '9'; volume.dispatchEvent(new w.Event('input', { bubbles: true }));
   assert.equal($('#soundtrack').volume, .09);
@@ -147,5 +147,28 @@ test('demo: música controlable y encuesta completa sin servidor ni pasos de ent
   assert.equal($('#guest-name').value, '');
   assert.equal(JSON.parse(w.localStorage.getItem('halloween-draft-demo-2026-familia-2026-v2')).receipt, null);
   assert.equal(JSON.parse(w.localStorage.getItem('halloween-demostracion-v1')).responses[0].id, 'antiguo');
+  assert.deepEqual(p.errors, []);
+});
+
+test('el bloqueo de autoplay no impide responder y un clic inicia la música sin reiniciarla al silenciar', async t => {
+  const p = page({ demo: true, url: '/demo' }), { w, $, waitFor } = p;
+  t.after(() => w.close());
+  let plays = 0;
+  w.HTMLMediaElement.prototype.play = async function () {
+    if (++plays === 1) throw new w.DOMException('Se requiere interacción', 'NotAllowedError');
+  };
+  p.boot(); await waitFor(() => $('#survey-form'));
+  assert.equal(plays, 1); assert.equal($('[data-action=sound]').getAttribute('aria-pressed'), 'false');
+  assert.equal($('#guest-name').disabled, false);
+  $('#guest-name').click();
+  await waitFor(() => $('[data-action=sound]').getAttribute('aria-pressed') === 'true');
+  assert.equal(plays, 2);
+  $('[data-action=sound]').click();
+  await waitFor(() => $('[data-action=sound]').getAttribute('aria-pressed') === 'false');
+  $('#guest-name').click();
+  assert.equal(plays, 2, 'Respetar el silencio elegido');
+  $('[data-action=sound]').click();
+  await waitFor(() => $('[data-action=sound]').getAttribute('aria-pressed') === 'true');
+  assert.equal(plays, 3);
   assert.deepEqual(p.errors, []);
 });
