@@ -1,0 +1,68 @@
+const paths = {
+  arrow: '<path d="M5 12h14m-6-6 6 6-6 6"/>', back: '<path d="M19 12H5m6-6-6 6 6 6"/>',
+  check: '<path d="m5 12 4 4L19 6"/>', lock: '<rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/>',
+  ghost: '<path d="M5 20V9a7 7 0 0 1 14 0v11l-3-2-4 3-4-3-3 2Z"/><path d="M9 9v2m6-2v2m-5 4h4"/>',
+  crown: '<path d="m3 6 4 4 5-6 5 6 4-4-2 13H5L3 6Zm3 10h12"/>',
+  spark: '<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Zm8 0v4m-2-2h4"/>',
+  ticket: '<path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7Zm12-2v3m0 3v2m0 3v3"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87M15 3a4 4 0 0 1 0 8"/><circle cx="9" cy="7" r="4"/>',
+  sound: '<path d="m11 5-6 4H2v6h3l6 4V5Zm4 3a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/>',
+  muted: '<path d="m11 5-6 4H2v6h3l6 4V5Zm5 4 5 6m0-6-5 6"/>',
+  x: '<path d="m6 6 12 12M18 6 6 18"/>', download: '<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',
+  refresh: '<path d="M20 7v5h-5M4 17v-5h5m10-4a8 8 0 0 0-14-3m0 11a8 8 0 0 0 14 3"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  leaf: '<path d="M20 3C7 2 2 7 5 15c7 8 16 2 15-12ZM4 21 16 9m-7 7v-5m4 1h5"/>',
+  eye: '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+  copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M15 9V3H3v12h6"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/>',
+};
+export const icon = (name, cls = '') => `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.spark}</svg>`;
+
+export function avatar(character = 'ghost') {
+  const head = character === 'witch' ? `<path d="M36 113q-15-60 27-69 38-9 49 50l-12 35H42Z" fill="#281b31"/><ellipse cx="75" cy="93" rx="29" ry="32" fill="#e7b6ac"/><path d="m38 66 24-54 18 17 24 38Z" fill="#1b2020"/><path d="m57 26 17-19 11 19-16-6Z" fill="#1b2020"/><path d="M33 65q36-16 78 2l9 12H27Z" fill="#292e2c"/><path d="m48 49 46 1 6 13-58-1Z" fill="#b588d8"/><path d="M45 84q5 23-1 36m59-36q5 20 7 31" fill="none" stroke="#513d55" stroke-width="7" stroke-linecap="round"/><circle cx="65" cy="94" r="2.5"/><circle cx="86" cy="94" r="2.5"/><path d="M70 107q7 6 13-1" fill="none" stroke="#754c51" stroke-width="2.5" stroke-linecap="round"/><path d="m48 128 25-11 27 12 16 32H32Z" fill="#b18acf"/>` : character === 'vampire' ? `<path d="m24 158 3-52 26 12 46-1 25-16 1 60" fill="#c56d4f"/><path d="m38 159 6-40 32 19 31-20 6 41" fill="#262527"/><ellipse cx="75" cy="83" rx="31" ry="37" fill="#d9c3a2"/><path d="M43 81q-12-43 32-43 45-1 31 46l-8-24-23 13-20-14Z" fill="#232625"/><path d="m47 79-10-7 4 25 9 1m54-19 11-7-5 25h-9" fill="#d9c3a2"/><path d="M57 85h11m14 0h11" stroke="#3b3330" stroke-width="3" stroke-linecap="round"/><circle cx="64" cy="89" r="2.5"/><circle cx="87" cy="89" r="2.5"/><path d="M65 103q11 10 22-1" stroke="#804f41" fill="none" stroke-width="2.5"/><path d="m66 104 3 8 4-6m9-1 3 7 2-9" fill="#fff4dc"/><path d="m61 124 14 16 14-16-14 3Z" fill="#efe3c4"/><path d="m61 136 14 5-14 7m28-12-14 5 14 7" fill="#ad4c42"/>` : `<path d="M37 141V84a39 39 0 0 1 78 0v62l-15-9-11 14-14-10-14 10-12-13-12 8Z" fill="#e0e2c6"/><path d="M42 106V82a34 34 0 0 1 48-31" fill="none" stroke="#f4edcc" stroke-width="6" stroke-linecap="round"/><ellipse cx="63" cy="87" rx="5" ry="7" fill="#2c423a"/><ellipse cx="88" cy="87" rx="5" ry="7" fill="#2c423a"/><path d="M68 105q8 8 16-1" fill="none" stroke="#2c423a" stroke-width="3" stroke-linecap="round"/><circle cx="53" cy="101" r="5" fill="#c6bda0"/><circle cx="100" cy="101" r="5" fill="#c6bda0"/><path d="m33 68 9-9h65l10 9Z" fill="#33483c"/><path d="M48 59V38q28-14 53 0v21" fill="#3e5544"/><path d="M48 49h53v10H48Z" fill="#cb9a54"/><path d="m49 147-7 10m60-11 10 10" stroke="#8da891" stroke-width="4"/>`;
+  return `<svg class="character-art" viewBox="0 0 150 170" aria-hidden="true"><ellipse cx="75" cy="154" rx="51" ry="9" fill="#000" opacity=".18"/>${head}<g fill="#e6c28b"><path d="m18 32 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z"/><circle cx="125" cy="48" r="2"/></g></svg>`;
+}
+
+export const hauntedHouse = `<svg class="haunted-scene" viewBox="0 0 600 570" role="img" aria-label="Una casa embrujada bajo una luna naranja, con calabazas, un fantasma y murciélagos">
+<defs>
+ <radialGradient id="moonGlow"><stop stop-color="#c77d42" stop-opacity=".25"/><stop offset="1" stop-color="#c77d42" stop-opacity="0"/></radialGradient>
+ <linearGradient id="moon" x2=".2" y2="1"><stop stop-color="#f2c379"/><stop offset="1" stop-color="#d8894e"/></linearGradient>
+ <linearGradient id="wall" x2="1" y2="1"><stop stop-color="#4b5141"/><stop offset="1" stop-color="#242d29"/></linearGradient>
+ <linearGradient id="tower" x2="1" y2=".3"><stop stop-color="#3a443a"/><stop offset="1" stop-color="#56604a"/></linearGradient>
+ <linearGradient id="lit" x2="0" y2="1"><stop stop-color="#fbd18a"/><stop offset="1" stop-color="#ce713c"/></linearGradient>
+ <linearGradient id="pump" x2="0" y2="1"><stop stop-color="#dd8b44"/><stop offset="1" stop-color="#a44c2c"/></linearGradient>
+</defs>
+<circle cx="326" cy="236" r="255" fill="url(#moonGlow)"/>
+<circle cx="335" cy="212" r="157" fill="url(#moon)"/>
+<g fill="#b57b49" opacity=".14"><circle cx="400" cy="123" r="29"/><circle cx="246" cy="189" r="19"/><circle cx="387" cy="242" r="42"/><circle cx="305" cy="104" r="9"/></g>
+<g fill="#cec5a2" opacity=".7"><path d="m133 84 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z"/><path d="m513 207 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z"/><circle cx="490" cy="91" r="2"/><circle cx="111" cy="223" r="2"/><circle cx="428" cy="51" r="2"/><circle cx="209" cy="39" r="1.5"/></g>
+<g class="scene-bats" fill="#17241f"><path d="M420 102q-9-22-25-12l9 12-16 2q14 1 19 12 4-14 19-15l-10-2Z"/><path d="M188 122q-10-19-25-9l11 9-17 4q16-1 20 8 4-11 18-12l-12-2Z"/><path d="M478 163q-12-22-29-10l12 9-19 4q17 0 24 11 4-12 20-12l-12-3Z"/></g>
+<path d="M43 462q218-97 501 1v75H43Z" fill="#17231f"/>
+<g stroke="#303a2e" stroke-width="8" fill="none" stroke-linecap="round"><path d="M112 449 90 221l11-50m-6 108-38-40-9-36m48 126 44-47 11-39m-44-7-23-45m6 126-44-24-12-39m56-70 25-28"/><path d="m487 443 22-173-13-58m8 94 41-42 9-41m-45 55-27-34m20 119 43-11 23-37"/></g>
+<g>
+ <path d="m159 424 9-146 113-14 107 30-1 140Z" fill="url(#wall)"/>
+ <path d="m143 287 85-97 71 78-19 22-51-58-65 73Z" fill="#1c2524" stroke="#62644b" stroke-width="2"/>
+ <path d="m164 285 66-75 54 63-5 18-49-54-56 63Z" fill="#3a3b32"/>
+ <path d="m222 217-6-44h19l7 48" fill="#454b3c"/><path d="m210 173 30-2v11l-28 3Z" fill="#1d2823"/>
+ <path d="m294 415 1-222 47-27 54 37-3 222Z" fill="url(#tower)"/>
+ <path d="m283 201 61-114 64 118-14 6-51-88-46 86Z" fill="#202827" stroke="#68664b" stroke-width="2"/>
+ <path d="m303 184 40-77 45 87-46-37Z" fill="#35392f"/><path d="m340 89 5-24 3 25" stroke="#9c9666" stroke-width="2"/>
+ <path d="m383 422 4-106 50-9 16 114Z" fill="#344034"/>
+ <path d="m374 321 39-63 48 56-11 9-36-41-28 47Z" fill="#1c2923" stroke="#62644b" stroke-width="2"/>
+ <path d="m175 345 106-8m-108 38 108-5m-109 33 111-3m-100-86 18-2m47-2 19-2m58-59 25 3m-26 24 26 3m-28 26 28 3m-26 29 27 1m-29 26 27 2m-27 27 30 2" stroke="#768062" opacity=".25" stroke-width="2"/>
+ <g fill="url(#lit)" stroke="#202921" stroke-width="6"><path d="M207 290v-25a19 19 0 0 1 38 0v25Z"/><path d="M187 360v-34a12 12 0 0 1 24 0v34Z"/><path d="M247 360v-36a12 12 0 0 1 24 0v36Z"/><path d="M327 239v-32a16 16 0 0 1 32 0v32Z"/><path d="M328 306v-32a16 16 0 0 1 32 0v32Z"/><path d="M405 368v-28a12 12 0 0 1 24 0v28Z"/></g>
+ <g stroke="#263128" stroke-width="4"><path d="M226 249v40m-17-21 34 1m-44 48v42m-10-20h20m50-24v44m-10-21h20m74-140v40m-14-20h28m-13 45v40m-15-22h30m75 10v35m-11-19h22"/></g>
+ <path d="M306 426v-57q29-51 60-1v60Z" fill="#17211c" stroke="#65684e" stroke-width="5"/>
+ <path d="M317 423v-49q20-34 39 0v50Z" fill="#7c6340"/><path d="M338 357v66" stroke="#253023" stroke-width="3"/><circle cx="348" cy="398" r="3" fill="#ebbf75"/>
+ <path d="m285 431 96-2 10 10-113 4Zm-17 14 134-4 12 11-157 7Z" fill="#565b43"/>
+ <path d="m154 426 304-4 3 12-309 6Z" fill="#202e24"/>
+ <path d="m153 426 4-35m-12 5 24-3m218 35 2-36m-13 7 26-2" stroke="#727253" stroke-width="4"/>
+</g>
+<path d="M280 455q47-8 111-4l82 66-247-2Z" fill="#716b49" opacity=".38"/>
+<g class="scene-ghost"><path d="M444 285v-41a23 23 0 0 1 46 0v43l-9-5-7 8-8-6-9 6-6-7-7 5Z" fill="#e7dfbe"/><ellipse cx="459" cy="250" rx="3" ry="4.5" fill="#28372b"/><ellipse cx="475" cy="250" rx="3" ry="4.5" fill="#28372b"/><ellipse cx="467" cy="263" rx="4" ry="5" fill="#526047"/></g>
+<g transform="translate(117 413)"><path d="m21 5 4-14 8-5" stroke="#778154" stroke-width="6" fill="none"/><ellipse cx="25" cy="24" rx="31" ry="25" fill="url(#pump)"/><ellipse cx="25" cy="24" rx="15" ry="25" fill="#dc843e"/><path d="m7 20 10-6 1 11Zm24-7 10 8-12 3ZM9 33l10 4 5-3 6 3 11-6-5 11-16 2Z" fill="#18251d"/></g>
+<g transform="translate(418 420) scale(.8)"><path d="m21 5-1-12 9-7" stroke="#778154" stroke-width="6" fill="none"/><ellipse cx="25" cy="24" rx="31" ry="25" fill="url(#pump)"/><ellipse cx="25" cy="24" rx="15" ry="25" fill="#d27b3e"/><path d="m7 20 10-6 1 11Zm24-7 10 8-12 3ZM9 33l10 4 5-3 6 3 11-6-5 11-16 2Z" fill="#18251d"/></g>
+<g fill="#314932"><path d="M66 477q-7-51-28-59 3 34 28 59Zm1 0q-1-39 24-46 0 33-24 46Zm-1 0q20-16 33-10-10 17-33 10ZM478 478q-1-47 29-61-5 41-29 61Zm-3 1q-20-41-38-36 10 28 38 36Zm7 0q29-20 44-13-18 24-44 13Z"/></g>
+<path d="M58 479q164-34 207-11m154 3q84-14 129 9" fill="none" stroke="#748363" stroke-width="2" opacity=".4"/>
+<g fill="#f1bc6e"><circle cx="153" cy="368" r="2"/><circle cx="457" cy="392" r="2"/><circle cx="121" cy="322" r="1.5"/><circle cx="501" cy="366" r="1.5"/></g>
+</svg>`;

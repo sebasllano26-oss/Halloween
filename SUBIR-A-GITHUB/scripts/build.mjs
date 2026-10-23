@@ -1,0 +1,24 @@
+import { build, transform } from 'esbuild';
+import { mkdir, readFile, writeFile, cp, stat } from 'node:fs/promises';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+await mkdir(resolve(root, 'dist/assets'), { recursive: true });
+await mkdir(resolve(root, 'dist/demo/assets'), { recursive: true });
+const compile = demo => build({ entryPoints: [resolve(root, 'src/client/app.js')], outfile: resolve(root, demo ? 'dist/demo/assets/app.js' : 'dist/assets/app.js'), bundle: true, minify: true, format: 'iife', target: ['es2020'], metafile: true, define: { __ALLOW_DEMO__: demo ? 'true' : 'false' }, logLevel: 'warning' });
+const [result] = await Promise.all([compile(false), compile(true)]);
+const styles = await Promise.all(['public/styles.css', 'public/theme-v2.css', 'public/survey-page.css'].map(file => readFile(resolve(root, file), 'utf8')));
+const css = await transform(styles.join('\n'), { loader: 'css', minify: true });
+await writeFile(resolve(root, 'dist/assets/app.css'), css.code);
+const html = await readFile(resolve(root, 'public/index.html'), 'utf8');
+await writeFile(resolve(root, 'dist/index.html'), html);
+await writeFile(resolve(root, 'dist/demo/index.html'), html.replace('data-runtime="vercel"', 'data-runtime="demo"').replace('src="/assets/app.js"', 'src="/demo/assets/app.js"').replace('<title>', '<title>Demostración · '));
+await cp(resolve(root, 'public/assets'), resolve(root, 'dist/assets'), { recursive: true });
+await writeFile(resolve(root, 'dist/robots.txt'), 'User-agent: *\nDisallow: /admin\nDisallow: /api/\n');
+const script = await readFile(resolve(root, 'dist/assets/app.js'), 'utf8');
+const privateInputs = Object.values(result.metafile.outputs).flatMap(output => Object.entries(output.inputs).filter(([file, details]) => file.replaceAll('\\', '/').includes('src/server/') && details.bytesInOutput > 0));
+if (privateInputs.length || /-----BEGIN PRIVATE KEY-----|process\.env\.|google\.script\.run|Clave ficticia/.test(script)) throw new Error('El cliente real incluye contenido reservado del servidor.');
+const assets = {};
+for (const name of ['mansion-v2.webp', 'mansion-v2-mobile.webp', 'mansion-v2.jpg', 'witch-v2.webp', 'vampire-v2.webp', 'ghost-v2.webp', 'antonia.webp', 'guillermo.webp', 'andrea.webp', 'ambiente-halloween.mp3']) assets[name] = (await stat(resolve(root, 'dist/assets', name))).size;
+console.log(JSON.stringify({ build: 'vercel + demo independiente', javascriptBytes: Buffer.byteLength(script), demoJavascriptBytes: (await stat(resolve(root, 'dist/demo/assets/app.js'))).size, cssBytes: Buffer.byteLength(css.code), artworkBytes: assets, output: 'dist', privateServerCodeInRealClient: false }));
