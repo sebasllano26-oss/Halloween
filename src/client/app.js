@@ -12,23 +12,14 @@ const runtime = document.documentElement.dataset.runtime;
 let publicData, draft, view = location.pathname === '/admin' || location.hash === '#admin' ? 'login' : 'home';
 let token = null, adminData = null, adminTab = 'overview', revealData = null, feedbackAudio, invitationError = '';
 let testMode = false;
-let motion = !matchMedia('(prefers-reduced-motion: reduce)').matches, reading = false, keyboardNavigation = false;
+// Animation and music have no on-page controls; only the device's reduced-motion setting turns motion off.
+const motion = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+let reading = false, keyboardNavigation = false;
 let cleanMotion = () => {};
-try { if (localStorage.getItem('halloween-motion') === 'off') motion = false; reading = localStorage.getItem('halloween-reading') === 'on'; } catch { /* Optional preferences. */ }
+try { reading = localStorage.getItem('halloween-reading') === 'on'; } catch { /* Optional preferences. */ }
 let storageKey, toastTimer, prefetchedCode = new URLSearchParams(location.search).get('invite') || '';
 const main = $('#main');
-let preferredVolume = .18;
-try { const saved = localStorage.getItem('halloween-volume'); if (saved !== null) preferredVolume = Math.max(0, Math.min(1, Number(saved) || 0)); } catch {}
-const soundtrack = createSoundtrack($('#soundtrack'), { volume: preferredVolume, onChange: updateMusicControls });
-function updateMusicControls() {
-  document.querySelectorAll('[data-action=sound]').forEach(button => {
-    button.setAttribute('aria-pressed', String(soundtrack.playing));
-    button.setAttribute('aria-label', soundtrack.playing ? 'Silenciar música de Halloween' : 'Activar música de Halloween');
-    button.innerHTML = `${icon(soundtrack.playing ? 'sound' : 'muted')} <span>${soundtrack.playing ? 'Silenciar música' : 'Activar música'}</span>`;
-  });
-  document.querySelectorAll('[data-music-volume]').forEach(input => { if (document.activeElement !== input) input.value = String(Math.round(soundtrack.volume * 100)); });
-  document.querySelectorAll('[data-volume-value]').forEach(span => { span.textContent = Math.round(soundtrack.volume * 100) + '%'; });
-}
+const soundtrack = createSoundtrack($('#soundtrack'), { volume: .25 });
 function saveDraft() { try { localStorage.setItem(storageKey, JSON.stringify(draft)); } catch { /* The current page still retains responses. */ } }
 function restoreGuestDraft() {
   storageKey = `halloween-draft-${runtime}-${publicData.event.edition}-${QUESTIONNAIRE_VERSION}`;
@@ -69,8 +60,7 @@ function renderChrome() {
   document.documentElement.classList.toggle('comfortable-reading', reading);
   const event = publicData.event;
   $('#header').innerHTML = `<button class="brand" data-action="home" aria-label="Volver al inicio"><span class="brand-mark">${icon('ghost')}</span><span><strong>El baile de las sombras</strong><small>HALLOWEEN · VÉLEZ LÓPEZ</small></span></button><nav class="header-links" aria-label="Navegación principal"><a href="#sospechosos" data-anchor="sospechosos">Los participantes</a><a href="#encuesta" data-anchor="encuesta">La encuesta</a></nav><div class="header-tools"><span class="edition-badge">EDICIÓN ${escape(event.edition)}</span><button class="text-button header-admin" data-action="admin">${icon('lock')} Anfitrión</button></div>`;
-  $('#experience-tools').innerHTML = `<div class="experience-tools-inner"><button type="button" class="tool-button music-toggle" data-action="sound" aria-pressed="${soundtrack.playing}"></button><label class="volume-control"><span>Volumen</span><input type="range" min="0" max="100" value="${Math.round(soundtrack.volume * 100)}" data-music-volume aria-label="Volumen de la música"><span data-volume-value>${Math.round(soundtrack.volume * 100)}%</span></label><span class="tools-spacer"></span><button type="button" class="tool-button" data-action="reading" aria-pressed="${reading}">Aa <span>${reading ? 'Letra habitual' : 'Letra grande'}</span></button><button type="button" class="tool-button" data-action="motion" aria-pressed="${!motion}">${icon('spark')} <span>${motion ? 'Pausar animación' : 'Activar animación'}</span></button></div>`;
-  updateMusicControls();
+  $('#experience-tools').innerHTML = `<div class="experience-tools-inner"><button type="button" class="tool-button" data-action="reading" aria-pressed="${reading}">Aa <span>${reading ? 'Letra habitual' : 'Letra grande'}</span></button></div>`;
   $('#footer').innerHTML = `<span class="footer-left">${icon('ghost')} ${escape(event.title)} · ${escape(event.edition)} <span aria-hidden="true">/</span> Una tradición de otro mundo.</span><button class="text-button" data-action="admin">${icon('lock')} Acceso del anfitrión</button>`;
   const environment = $('#environment');
   environment.hidden = runtime === 'vercel' && !testMode;
@@ -335,8 +325,6 @@ document.addEventListener('click', async event => {
       case 'start': await startGuest(); break;
       case 'dialog-start': $('#modal').close(); await startGuest(); break;
       case 'close-dialog': $('#modal').close(); break;
-      case 'sound': try { await soundtrack.toggle(); } catch { notify('No se pudo activar la música. Puedes seguir respondiendo y volver a intentarlo.'); } break;
-      case 'motion': motion = !motion; try { localStorage.setItem('halloween-motion', motion ? 'on' : 'off'); } catch {} renderChrome(); animateScreen(); if (keyboardNavigation) $('[data-action=motion]')?.focus(); notify(motion ? 'Animaciones activadas.' : 'Animaciones en pausa.'); break;
       case 'reading': reading = !reading; try { localStorage.setItem('halloween-reading', reading ? 'on' : 'off'); } catch {} renderChrome(); if (keyboardNavigation) $('[data-action=reading]')?.focus(); announce(reading ? 'Letra ampliada.' : 'Tamaño de letra habitual.'); break;
       case 'demo-reset': if (runtime !== 'demo') break; await resetDemo(); token = null; adminData = null; revealData = null; invitationError = ''; draft = createDraft(publicData.event.edition); draft.code = 'HALLOWEEN-DEMO'; saveDraft(); prefetchedCode = ''; history.replaceState(null, '', '/demo'); view = 'home'; await boot(); notify('La prueba está lista para empezar otra vez.'); break;
       case 'download-receipt': if (draft.receipt) download(`${runtime === 'demo' ? 'DEMOSTRACIÓN · Sin voto real\n\n' : ''}${publicData.event.title} · ${publicData.event.edition}\nParticipación confirmada\n\nInvitado: ${draft.name}\nComprobante: ${draft.receipt.id}\nFecha: ${new Date(draft.receipt.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' })} · Colombia\n`, `comprobante-halloween-${publicData.event.edition}.txt`, 'text/plain;charset=utf-8'); break;
@@ -364,16 +352,13 @@ async function boot() {
     main.innerHTML = `<section class="success-page"><div class="success-emblem">${icon('ghost')}</div><h1>La puerta está<br><em>un poquito atascada.</em></h1><p>${escape(error.message || 'No pudimos cargar el formulario. Vuelve a intentarlo en un momento.')}</p><button class="btn btn-primary" data-action="retry-boot" style="margin-top:25px">Volver a intentar ${icon('refresh')}</button></section>`;
   }
 }
-document.addEventListener('input', event => {
-  if (!event.target.matches('[data-music-volume]')) return;
-  soundtrack.setVolume(Number(event.target.value) / 100); updateMusicControls();
-  try { localStorage.setItem('halloween-volume', String(soundtrack.volume)); } catch {}
-});
 document.addEventListener('keydown', () => {
   if (!keyboardNavigation) { keyboardNavigation = true; document.documentElement.classList.add('keyboard-navigation'); cleanMotion(); }
 });
 document.addEventListener('pointerdown', () => { keyboardNavigation = false; document.documentElement.classList.remove('keyboard-navigation'); }, { passive: true });
 document.addEventListener('error', event => { if (event.target.tagName === 'IMG' && event.target.closest('.portrait, .participant-photo')) event.target.closest('.portrait, .participant-photo').classList.add('asset-unavailable'); }, true);
 window.addEventListener('pagehide', () => soundtrack.pause());
+// Without a music button, returning through the back/forward cache must start the music again.
+window.addEventListener('pageshow', event => { if (event.persisted) void soundtrack.autoplay(document); });
 void soundtrack.autoplay(document);
 void boot();

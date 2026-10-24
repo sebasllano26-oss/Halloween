@@ -38,8 +38,6 @@ export function createSoundtrack(element, { volume = .18, onChange = () => {} } 
         return false;
       });
       const onGesture = event => {
-        // The music button has its own toggle; do not consume the same tap twice.
-        if (event.target?.closest?.('[data-action="sound"]')) return;
         if (event.type === 'keydown' && (event.repeat || event.ctrlKey || event.altKey || event.metaKey || ['Tab', 'Escape', 'Shift', 'Control', 'Alt', 'Meta'].includes(event.key))) return;
         if (!requested && !playing) void tryStart();
       };

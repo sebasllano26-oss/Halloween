@@ -40,9 +40,9 @@ Los originales están en `design/photos`; las copias públicas en `public/assets
 
 ## Música
 
-Pista original regenerada como vals de Halloween con órgano, campanas graves, caja de música y theremín. FFprobe verificó MP3, 48 segundos exactos, estéreo, 32.000 Hz y 769.669 bytes. La fuente WAV se normalizó a un pico de 0,78. FFmpeg verificó un máximo del MP3 de −2,6 dBFS y media de −15,4 dBFS, sin saturación.
+Pista regenerada como **Tocata de medianoche**: comienzo de la Tocata BWV 565 de Bach (dominio público) en órgano sintetizado, danza macabra original, campanas, trueno, viento, búho y lobo. FFprobe verificó MP3, 60 segundos exactos, estéreo, 44.100 Hz y 961.009 bytes. La fuente WAV se normalizó a un pico de 0,89. FFmpeg verificó un máximo del MP3 de −1,6 dBFS y una media de −17,9 dBFS, sin saturación. Un análisis Goertzel del WAV confirmó las notas La–Sol–La, Sol–Fa–Mi–Re–Do♯–Re de la tocata y la melodía del segundo acto.
 
-Las pruebas verifican intento de inicio automático, recuperación tras `NotAllowedError` con clic/toque/tecla, respeto del silencio elegido, ausencia de inicios duplicados mientras carga, bucle, volumen inicial del 18 %, cambio a 9 % y fallo de reproducción sin indicar falsamente que la música está sonando. El archivo se sirve desde el mismo proyecto con una versión en la URL para renovar la caché.
+Las pruebas verifican el intento de inicio automático, la recuperación tras `NotAllowedError` con clic, toque o tecla, que no haya inicios duplicados mientras carga, el bucle, el volumen fijo del 25 % aunque exista una preferencia antigua de volumen, que no se conserve una pausa antigua de animación, que no aparezcan los botones de música, volumen ni animación, y que un fallo de reproducción no indique falsamente que la música está sonando. El archivo se sirve desde el mismo proyecto con una versión en la URL para renovar la caché.
 
 Las pruebas de control usan HTMLMediaElement simulado; no certifican la reproducción audible en un dispositivo real. No hubo capacidad de escucha disponible. La fuente y regeneración están documentadas en `design/audio/README.md`.
 

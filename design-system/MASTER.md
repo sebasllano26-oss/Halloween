@@ -29,9 +29,9 @@ Originales adjuntos por el usuario. Las versiones WebP mantienen el contenido y 
 
 ## Música y movimiento
 
-Pista instrumental original de 32 segundos, celesta suave y armonía cálida. Archivo local MP3, bucle y volumen inicial 18 %. Empieza tras pulsar Activar música; siempre hay control de volumen y silencio.
+**Tocata de medianoche**: 60 segundos en bucle. Abre con el comienzo de la Tocata en re menor de Bach en órgano y sigue con una danza macabra con theremín, campanas, trueno y lobo. Archivo local MP3 con volumen fijo del 25 %. Intenta sonar al abrir la página o con la primera interacción. No hay botones de música ni de animación; el sonido se controla con el volumen del dispositivo.
 
-GSAP anima entrada de portada, fantasma, niebla, luces, paralaje sutil y revelación. Las preguntas permanecen quietas durante la lectura. Se respeta movimiento reducido y pausa. Los contextos se limpian al cambiar al panel o al usar teclado.
+GSAP anima entrada de portada, fantasma, niebla, luces, paralaje sutil y revelación. Las preguntas permanecen quietas durante la lectura. Se respeta la preferencia de movimiento reducido del dispositivo. Los contextos se limpian al cambiar al panel o al usar teclado.
 
 ## Fiabilidad
 

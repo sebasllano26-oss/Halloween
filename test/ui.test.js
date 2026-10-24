@@ -120,24 +120,23 @@ test('encuesta completa en una página: errores junto a la pregunta, cambios, re
   assert.deepEqual(p.errors, []);
 });
 
-test('demo: música controlable y encuesta completa sin servidor ni pasos de entrada', async t => {
+test('demo: la música arranca sola, sin botones de música ni de animación, y la encuesta se completa sin servidor', async t => {
   const p = page({ demo: true, url: '/demo', animated: true }), { w, $, waitFor, answer, submit } = p;
   t.after(() => p.dom.window.close());
   w.fetch = () => { throw new Error('La demostración no debe llamar al servidor real'); };
   w.localStorage.setItem('halloween-demostracion-v1', JSON.stringify({ config: { title: 'Demostración antigua' }, responses: [{ id: 'antiguo' }] }));
-  let plays = 0, pauses = 0;
+  w.localStorage.setItem('halloween-volume', '0'); w.localStorage.setItem('halloween-motion', 'off');
+  let plays = 0;
   w.HTMLMediaElement.prototype.play = async function () { plays++; };
-  w.HTMLMediaElement.prototype.pause = function () { pauses++; };
   p.boot(); await waitFor(() => $('#survey-form'));
   assert.match($('#environment').textContent, /Demostraci/);
   assert.match(p.$('.cinema-kicker').textContent, /Halloween Vélez López/);
-  await waitFor(() => $('[data-action=sound]').getAttribute('aria-pressed') === 'true');
-  assert.equal(plays, 1, 'La música intenta comenzar al abrir la página');
-  assert.equal(plays, 1); assert.equal($('#soundtrack').loop, true); assert.equal($('#soundtrack').volume, .18);
-  const volume = $('[data-music-volume]'); volume.value = '9'; volume.dispatchEvent(new w.Event('input', { bubbles: true }));
-  assert.equal($('#soundtrack').volume, .09);
-  $('[data-action=sound]').click(); await waitFor(() => $('[data-action=sound]').getAttribute('aria-pressed') === 'false');
-  assert.ok(pauses > 0);
+  await waitFor(() => plays === 1, 'La música intenta comenzar al abrir la página');
+  assert.equal($('#soundtrack').loop, true);
+  assert.equal($('#soundtrack').volume, .25, 'Preferencias antiguas de volumen no silencian la música');
+  assert.equal(w.document.documentElement.classList.contains('motion-off'), false, 'Una pausa antigua de animación no se conserva');
+  for (const hidden of ['[data-action=sound]', '[data-music-volume]', '[data-action=motion]']) assert.equal($(hidden), null, hidden);
+  assert.ok($('#experience-tools [data-action=reading]'), 'La letra grande sigue disponible');
   $('#guest-name').value = 'Invitado de prueba'; $('#guest-name').dispatchEvent(new w.Event('input', { bubbles: true }));
   assert.equal($('#guest-code'), null);
   for (const q of QUESTIONS) answer(q.id);
@@ -150,7 +149,7 @@ test('demo: música controlable y encuesta completa sin servidor ni pasos de ent
   assert.deepEqual(p.errors, []);
 });
 
-test('el bloqueo de autoplay no impide responder y un clic inicia la música sin reiniciarla al silenciar', async t => {
+test('el bloqueo de autoplay no impide responder y el primer clic inicia la música una sola vez', async t => {
   const p = page({ demo: true, url: '/demo' }), { w, $, waitFor } = p;
   t.after(() => w.close());
   let plays = 0;
@@ -158,18 +157,12 @@ test('el bloqueo de autoplay no impide responder y un clic inicia la música sin
     if (++plays === 1) throw new w.DOMException('Se requiere interacción', 'NotAllowedError');
   };
   p.boot(); await waitFor(() => $('#survey-form'));
-  assert.equal(plays, 1); assert.equal($('[data-action=sound]').getAttribute('aria-pressed'), 'false');
+  assert.equal(plays, 1);
   assert.equal($('#guest-name').disabled, false);
   $('#guest-name').click();
-  await waitFor(() => $('[data-action=sound]').getAttribute('aria-pressed') === 'true');
-  assert.equal(plays, 2);
-  $('[data-action=sound]').click();
-  await waitFor(() => $('[data-action=sound]').getAttribute('aria-pressed') === 'false');
-  $('#guest-name').click();
-  assert.equal(plays, 2, 'Respetar el silencio elegido');
-  $('[data-action=sound]').click();
-  await waitFor(() => $('[data-action=sound]').getAttribute('aria-pressed') === 'true');
-  assert.equal(plays, 3);
+  await waitFor(() => plays === 2, 'El primer clic inicia la música');
+  $('#guest-name').click(); await new Promise(resolve => setTimeout(resolve, 30));
+  assert.equal(plays, 2, 'La música no se reinicia con cada clic');
   assert.deepEqual(p.errors, []);
 });
 

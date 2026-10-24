@@ -6,7 +6,7 @@ Se utilizaron los tres archivos adjuntos del usuario en el orden indicado: **Ant
 
 `scripts/prepare-photos.mjs` normaliza la orientación y prepara WebP de hasta 900 px de ancho, conservando la proporción completa. La interfaz encuadra las fotos con CSS. No se generaron reemplazos de las personas ni se alteraron sus rostros. La asignación usa sus nombres y aparece en la presentación, el voto y el resultado; un participante con otro nombre recibe iniciales como respaldo.
 
-El arte descrito a continuación permanece como decoración de Halloween. La música original está documentada en `design/audio/README.md`.
+El arte descrito a continuación permanece como decoración de Halloween. La música está documentada en `design/audio/README.md`.
 
 ## Decoración generada
 
